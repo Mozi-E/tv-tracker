@@ -102,5 +102,30 @@ sent.clear()
 run.main([])
 check("no duplicate alert", sent == [])
 
+print("Run 4: webhook mode - update handed in via TELEGRAM_UPDATE_JSON")
+sent.clear()
+telegram.get_updates = lambda *a, **k: (_ for _ in ()).throw(
+    AssertionError("getUpdates must not be called in webhook mode")
+)
+os.environ["TELEGRAM_WEBHOOK_MODE"] = "1"
+os.environ["TELEGRAM_UPDATE_JSON"] = json.dumps(
+    {"update_id": 5001, "message": {"text": "/remove 1", "chat": {"id": 777}}}
+)
+run.main(["--no-check"])
+check("webhook: /remove handled without getUpdates", "Stopped tracking" in sent[-1][1])
+check("webhook: title removed", load("titles.json")["titles"] == [])
+check("webhook: update_id remembered", 5001 in load("state.json")["recent_update_ids"])
+
+print("Run 5: webhook mode - Telegram retries the same update")
+sent.clear()
+run.main(["--no-check"])
+check("webhook: duplicate update ignored", sent == [])
+
+print("Run 6: webhook idle - flag set, no update this run")
+sent.clear()
+del os.environ["TELEGRAM_UPDATE_JSON"]
+run.main(["--no-check"])
+check("webhook idle: nothing sent, no crash", sent == [])
+
 print(f"\n{'FAILED' if fails else 'PASSED'} ({fails} failing)")
 sys.exit(1 if fails else 0)

@@ -1,0 +1,11 @@
+# Deploy with:  cd webhook && npx wrangler deploy
+# (or paste worker.js into the Cloudflare dashboard - see README.md)
+
+name = "tv-tracker-webhook"
+main = "worker.js"
+compatibility_date = "2024-11-01"
+
+# Non-secret var. Secrets (GH_TOKEN, TELEGRAM_SECRET_TOKEN, ALLOWED_USER_IDS)
+# are set with:  npx wrangler secret put GH_TOKEN   (etc.)
+[vars]
+GH_REPO = "Mozi-E/tv-tracker"

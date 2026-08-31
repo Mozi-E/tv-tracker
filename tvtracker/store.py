@@ -48,6 +48,7 @@ def load_state() -> dict:
     data = _load(_state_path(), {})
     data.setdefault("telegram_offset", 0)
     data.setdefault("subscribers", [])
+    data.setdefault("recent_update_ids", [])
     data.setdefault("titles", {})
     return data
 

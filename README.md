@@ -74,6 +74,14 @@ UTC) and can also be started by hand from the **Actions** tab
 Telegram is picked up on the next run — hit **Run workflow** if you want it
 sooner, or edit the cron to run more often.
 
+### Optional: instant updates
+
+For near-instant handling of your Telegram commands (instead of once a day),
+set up the Cloudflare Worker webhook in [`webhook/README.md`](webhook/README.md).
+Telegram then pushes every message to the Worker, which triggers this workflow
+via `repository_dispatch` within seconds. The daily cron still runs the TMDB
+check.
+
 ## 5. Use it from Telegram
 
 ```
