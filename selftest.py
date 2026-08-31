@@ -159,6 +159,8 @@ def test_commands():
 
     r = commands.handle_update(_update("/list"), titles, state)
     check("/list shows two items", r[0][1].count("/remove") == 2)
+    check("/list items are TMDB hyperlinks",
+          '<a href="https://www.themoviedb.org/' in r[0][1] and r[0][2] == "HTML")
 
     r = commands.handle_update(_update("/remove 1"), titles, state)
     check("/remove by number works", len(titles["titles"]) == 1 and "Stopped tracking" in r[0][1])
@@ -170,10 +172,37 @@ def test_commands():
     check("non-command nudges to /help", "/help" in r[0][1])
 
 
+def test_url_parsing_and_add():
+    print("TMDB URL parsing + /add by link")
+    check("plain tv url", tmdb.parse_tmdb_url("https://www.themoviedb.org/tv/1399") == ("tv", 1399))
+    check("slug tv url",
+          tmdb.parse_tmdb_url("https://www.themoviedb.org/tv/1399-game-of-thrones") == ("tv", 1399))
+    check("movie url with query",
+          tmdb.parse_tmdb_url("https://themoviedb.org/movie/603-the-matrix?language=en-US") == ("movie", 603))
+    check("season deep link",
+          tmdb.parse_tmdb_url("www.themoviedb.org/tv/1399/season/2") == ("tv", 1399))
+    check("non-tmdb url -> None", tmdb.parse_tmdb_url("https://example.com/tv/1") is None)
+    check("plain text -> None", tmdb.parse_tmdb_url("game of thrones") is None)
+
+    titles = {"titles": []}
+    state = {"telegram_offset": 0, "subscribers": [], "recent_update_ids": [], "titles": {}}
+    tmdb.tv_details = lambda i: {"name": "Game of Thrones", "seasons": [],
+                                "status": "Ended", "number_of_seasons": 8}
+    r = commands.handle_update(
+        _update("/add https://www.themoviedb.org/tv/1399-game-of-thrones"), titles, state
+    )
+    check("/add <url> tracks the right id",
+          titles["titles"] == [{"id": 1399, "media_type": "tv",
+                                "title": "Game of Thrones", "added_by": 555}])
+    check("/add <url> confirmation links to TMDB",
+          '<a href="https://www.themoviedb.org/tv/1399"' in r[0][1] and r[0][2] == "HTML")
+
+
 if __name__ == "__main__":
     test_tv_snapshot_and_diff()
     test_movie_snapshot_and_diff()
     test_store_roundtrip()
     test_commands()
+    test_url_parsing_and_add()
     print(f"\n{PASS} passed, {FAIL} failed")
     sys.exit(1 if FAIL else 0)

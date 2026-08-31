@@ -3,6 +3,7 @@
 Run once per day by .github/workflows/check.yml. Both steps mutate the
 in-repo JSON files, which the workflow commits back afterwards.
 """
+import html
 import json
 import os
 import sys
@@ -69,9 +70,11 @@ def _handle_updates(updates, titles_data: dict, state: dict, webhook: bool) -> N
         except Exception as e:  # one bad message must not abort the run
             print(f"[commands] error on update {uid}: {e}")
             replies = []
-        for chat_id, text in replies:
+        for reply in replies:
+            chat_id, text = reply[0], reply[1]
+            parse_mode = reply[2] if len(reply) > 2 else None
             try:
-                telegram.send_message(chat_id, text)
+                telegram.send_message(chat_id, text, parse_mode=parse_mode)
             except telegram.TelegramError as e:
                 print(f"[telegram] reply to {chat_id} failed: {e}")
         if uid is not None:
@@ -81,7 +84,7 @@ def _handle_updates(updates, titles_data: dict, state: dict, webhook: bool) -> N
     print(f"[telegram] processed {handled} update(s) ({'webhook' if webhook else 'poll'})")
 
 
-def _notify(state: dict, text: str) -> bool:
+def _notify(state: dict, text: str, parse_mode: str = None) -> bool:
     targets = set(state.get("subscribers", []))
     cid = config.telegram_chat_id()
     if cid:
@@ -89,7 +92,7 @@ def _notify(state: dict, text: str) -> bool:
     delivered = False
     for chat_id in targets:
         try:
-            telegram.send_message(chat_id, text)
+            telegram.send_message(chat_id, text, parse_mode=parse_mode)
             delivered = True
         except telegram.TelegramError as e:
             print(f"[telegram] notify {chat_id} failed: {e}")
@@ -119,9 +122,13 @@ def run_checks(titles_data: dict, state: dict) -> None:
             continue
 
         if changes:
-            body = f'Update for "{name}":\n' + "\n".join(f"- {c}" for c in changes)
+            link = tmdb.web_url(mt, tmdb_id)
+            body = (
+                f'Update for <a href="{link}">{html.escape(name)}</a>:\n'
+                + "\n".join(f"- {html.escape(c)}" for c in changes)
+            )
             print(f"[change] {k}: {changes}")
-            if not _notify(state, body):
+            if not _notify(state, body, parse_mode="HTML"):
                 # keep old snapshot so we retry the alert once a target exists
                 print(f"[change] {k}: not delivered, will retry next run")
                 continue

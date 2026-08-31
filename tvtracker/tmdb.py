@@ -1,9 +1,34 @@
 """Minimal TMDB API v3 client (uses the `api_key` query-param auth)."""
+import re
+
 from . import config
 
 
 class TMDBError(RuntimeError):
     pass
+
+
+_URL_RE = re.compile(r"themoviedb\.org/(tv|movie)/(\d+)", re.IGNORECASE)
+
+
+def parse_tmdb_url(text):
+    """Pull (media_type, id) out of a themoviedb.org URL, or return None.
+
+    Accepts any of:
+      https://www.themoviedb.org/tv/1399
+      https://www.themoviedb.org/tv/1399-game-of-thrones
+      https://themoviedb.org/movie/603-the-matrix?language=en-US
+      www.themoviedb.org/tv/1399/season/2
+    """
+    m = _URL_RE.search(text or "")
+    if not m:
+        return None
+    return m.group(1).lower(), int(m.group(2))
+
+
+def web_url(media_type: str, tmdb_id) -> str:
+    """The public TMDB page for a title."""
+    return f"https://www.themoviedb.org/{media_type}/{tmdb_id}"
 
 
 def _get(path: str, **params):

@@ -29,7 +29,7 @@ def stub_get_updates(offset=0, timeout=0):
     return out
 
 
-def stub_send_message(chat_id, text):
+def stub_send_message(chat_id, text, parse_mode=None):
     sent.append((chat_id, text))
     return {"message_id": len(sent)}
 

@@ -31,7 +31,8 @@ def get_updates(offset: int = 0, timeout: int = 0):
     )
 
 
-def send_message(chat_id, text: str):
-    return _api(
-        "sendMessage", chat_id=chat_id, text=text, disable_web_page_preview=False
-    )
+def send_message(chat_id, text: str, parse_mode: str = None):
+    params = dict(chat_id=chat_id, text=text, disable_web_page_preview=True)
+    if parse_mode:
+        params["parse_mode"] = parse_mode
+    return _api("sendMessage", **params)

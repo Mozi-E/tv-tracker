@@ -85,14 +85,17 @@ check.
 ## 5. Use it from Telegram
 
 ```
-/add The Bear            search TMDB and track the top match
-/add Dune                if ambiguous, the bot lists options with ready commands
-/add tv 1399             track by exact TMDB id
-/add movie 603           track by exact TMDB id
-/list                    show everything you track
-/remove 2                stop tracking item #2 from /list
-/help                    command reference
+/add The Bear                                    search TMDB, track the top match
+/add Dune                                        if ambiguous, pick from a list
+/add https://www.themoviedb.org/tv/1399          track by pasting a TMDB link
+/add tv 1399                                     track by exact TMDB id
+/add movie 603                                   track by exact TMDB id
+/list                                            show everything you track
+/remove 2                                        stop tracking item #2 from /list
+/help                                            command reference
 ```
+
+Replies and alerts link each title straight to its TMDB page.
 
 ## Local development
 
