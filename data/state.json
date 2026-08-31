@@ -2,7 +2,8 @@
   "recent_update_ids": [
     1,
     182911138,
-    182911139
+    182911139,
+    182911140
   ],
   "subscribers": [
     5179879702
@@ -19,6 +20,18 @@
         "2": "2024-11-14",
         "3": "2026-07-02",
         "4": null
+      },
+      "status": "Returning Series"
+    },
+    "tv:136311": {
+      "kind": "tv",
+      "name": "Shrinking",
+      "next_episode_air_date": null,
+      "number_of_seasons": 3,
+      "seasons": {
+        "1": "2023-01-26",
+        "2": "2024-10-15",
+        "3": "2026-01-27"
       },
       "status": "Returning Series"
     }
