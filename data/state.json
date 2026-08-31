@@ -2,6 +2,20 @@
   "subscribers": [
     5179879702
   ],
-  "telegram_offset": 182911130,
-  "titles": {}
+  "telegram_offset": 182911132,
+  "titles": {
+    "tv:125988": {
+      "kind": "tv",
+      "name": "Silo",
+      "next_episode_air_date": "2026-09-03",
+      "number_of_seasons": 4,
+      "seasons": {
+        "1": "2023-05-04",
+        "2": "2024-11-14",
+        "3": "2026-07-02",
+        "4": null
+      },
+      "status": "Returning Series"
+    }
+  }
 }
