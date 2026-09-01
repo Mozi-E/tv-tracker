@@ -4,7 +4,8 @@
     182911138,
     182911139,
     182911140,
-    182911141
+    182911141,
+    182911142
   ],
   "subscribers": [
     5179879702
@@ -53,6 +54,31 @@
         "1": "2023-01-26",
         "2": "2024-10-15",
         "3": "2026-01-27"
+      },
+      "status": "Returning Series"
+    },
+    "tv:97546": {
+      "kind": "tv",
+      "last_episode": {
+        "air_date": "2026-08-25",
+        "key": "S04E04",
+        "name": "Greyhounds' Day Off"
+      },
+      "name": "Ted Lasso",
+      "next_episode": {
+        "air_date": "2026-09-01",
+        "key": "S04E05",
+        "name": "Riches of Embarrassment"
+      },
+      "notified_episodes": [
+        "S04E04"
+      ],
+      "number_of_seasons": 4,
+      "seasons": {
+        "1": "2020-08-14",
+        "2": "2021-07-23",
+        "3": "2023-03-14",
+        "4": "2026-08-04"
       },
       "status": "Returning Series"
     }
