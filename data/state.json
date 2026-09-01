@@ -13,8 +13,20 @@
   "titles": {
     "tv:125988": {
       "kind": "tv",
+      "last_episode": {
+        "air_date": "2026-08-27",
+        "key": "S03E09",
+        "name": "Farewell"
+      },
       "name": "Silo",
-      "next_episode_air_date": "2026-09-03",
+      "next_episode": {
+        "air_date": "2026-09-03",
+        "key": "S03E10",
+        "name": "Troy"
+      },
+      "notified_episodes": [
+        "S03E09"
+      ],
       "number_of_seasons": 4,
       "seasons": {
         "1": "2023-05-04",
@@ -26,8 +38,16 @@
     },
     "tv:136311": {
       "kind": "tv",
+      "last_episode": {
+        "air_date": "2026-04-07",
+        "key": "S03E11",
+        "name": "And That's Our Time"
+      },
       "name": "Shrinking",
-      "next_episode_air_date": null,
+      "next_episode": null,
+      "notified_episodes": [
+        "S03E11"
+      ],
       "number_of_seasons": 3,
       "seasons": {
         "1": "2023-01-26",
