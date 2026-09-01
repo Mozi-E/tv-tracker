@@ -41,10 +41,15 @@ def test_tv_snapshot_and_diff():
         "name": "Game of Thrones",
         "status": "Returning Series",
         "number_of_seasons": 2,
-        "next_episode_to_air": {"air_date": "2012-04-08"},
+        "last_episode_to_air": {"season_number": 2, "episode_number": 3,
+                                "air_date": "2012-04-08", "name": "What Is Dead May Never Die"},
+        "next_episode_to_air": {"season_number": 2, "episode_number": 4,
+                                "air_date": "2012-04-15", "name": "Garden of Bones"},
     }
     snap = tv_snapshot(got)
     check("specials dropped", set(snap["seasons"]) == {"1", "2"})
+    check("episode keys parsed",
+          snap["last_episode"]["key"] == "S02E03" and snap["next_episode"]["key"] == "S02E04")
 
     check("first observation -> no alert", diff_tv(None, snap) == [])
     check("unchanged -> no alert", diff_tv(snap, snap) == [])
@@ -68,6 +73,36 @@ def test_tv_snapshot_and_diff():
     revived_new = dict(snap, status="Returning Series")
     check("revived show status change",
           diff_tv(revived_old, revived_new) == ["Show status: Ended -> Returning Series"])
+
+    # --- new-episode alerts ---
+    import copy
+
+    base = tv_snapshot(got)
+    diff_tv(None, base)  # establish baseline
+    check("baseline seeds only the aired episode", base["notified_episodes"] == ["S02E03"])
+
+    TODAY = "2012-04-15"
+    aired = copy.deepcopy(base)
+    aired["last_episode"] = {"key": "S02E04", "name": "Garden of Bones", "air_date": TODAY}
+    aired["next_episode"] = {"key": "S02E05", "name": "The Ghost of Harrenhal", "air_date": "2012-04-22"}
+    d = diff_tv(copy.deepcopy(base), aired, today=TODAY)
+    check("new episode alert on air day",
+          d == ['New episode S02E04: "Garden of Bones" - airs today'])
+    check("aired episode is remembered", aired["notified_episodes"] == ["S02E03", "S02E04"])
+
+    d = diff_tv(aired, copy.deepcopy(aired), today="2012-04-16")
+    check("no repeat alert next run", d == [])
+
+    old_ep = copy.deepcopy(base)
+    stale = copy.deepcopy(base)
+    stale["last_episode"] = {"key": "S02E09", "name": "Old", "air_date": "2012-01-01"}
+    stale["next_episode"] = {"key": "S02E10", "name": "Later", "air_date": "2099-01-01"}
+    check("episode outside the alert window -> no alert",
+          diff_tv(old_ep, stale, today=TODAY) == [])
+
+    pre_feature = {"seasons": base["seasons"], "status": "Returning Series", "number_of_seasons": 2}
+    check("pre-feature snapshot seeds instead of backfilling",
+          diff_tv(pre_feature, copy.deepcopy(aired), today=TODAY) == [])
 
 
 # ------------------------------------------------------------ movie snapshots

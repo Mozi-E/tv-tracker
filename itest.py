@@ -48,7 +48,10 @@ TV = {
             {"season_number": 1, "air_date": "2011-04-17"},
             {"season_number": 2, "air_date": "2012-04-01"},
         ],
-        "next_episode_to_air": None,
+        "last_episode_to_air": {"season_number": 2, "episode_number": 1,
+                                "air_date": "2012-04-01", "name": "The North Remembers"},
+        "next_episode_to_air": {"season_number": 2, "episode_number": 2,
+                                "air_date": "2099-01-01", "name": "The Night Lands"},
     }
 }
 tmdb.tv_details = lambda i: TV[i]
@@ -126,6 +129,35 @@ sent.clear()
 del os.environ["TELEGRAM_UPDATE_JSON"]
 run.main(["--no-check"])
 check("webhook idle: nothing sent, no crash", sent == [])
+
+print("Run 7: re-add the show, then Season 2 Episode 2 airs today")
+sent.clear()
+del os.environ["TELEGRAM_WEBHOOK_MODE"]
+from datetime import date
+TODAY = date.today().isoformat()
+telegram.get_updates = lambda *a, **k: [
+    {"update_id": 7001, "message": {"text": "/add game of thrones", "chat": {"id": 777}}}
+]
+run.main([])                       # re-adds title, fresh baseline (aired: S02E01)
+sent.clear()
+telegram.get_updates = lambda *a, **k: []
+TV[1399] = dict(
+    TV[1399],
+    last_episode_to_air={"season_number": 2, "episode_number": 2,
+                         "air_date": TODAY, "name": "The Night Lands"},
+    next_episode_to_air={"season_number": 2, "episode_number": 3,
+                         "air_date": "2099-02-01", "name": "What Is Dead May Never Die"},
+)
+run.main([])
+check("episode alert delivered once", len(sent) == 1)
+check("alert names the episode", "S02E02" in sent[0][1] and "airs today" in sent[0][1])
+check("episode remembered in state",
+      "S02E02" in load("state.json")["titles"]["tv:1399"]["notified_episodes"])
+
+print("Run 8: same episode still latest tomorrow - no repeat")
+sent.clear()
+run.main([])
+check("no repeat episode alert", sent == [])
 
 print(f"\n{'FAILED' if fails else 'PASSED'} ({fails} failing)")
 sys.exit(1 if fails else 0)

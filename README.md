@@ -3,7 +3,8 @@
 Watches a list of TV shows and movies on [TMDB](https://developer.themoviedb.org/docs)
 and sends a Telegram message when:
 
-- a **new season** of a tracked show is announced or gets an air date, or
+- a **new season** of a tracked show is announced or gets an air date,
+- a **new episode** of a tracked show airs (on/around its air date), or
 - a **sequel / related film** appears in a tracked movie's franchise (TMDB "collection").
 
 You manage the watch-list entirely from Telegram (`/add`, `/list`, `/remove`).
@@ -121,6 +122,11 @@ python check.py           # a real run against TMDB + Telegram using your .env
   will not trigger an alert until TMDB links it.
 - The first time a title is seen, the current state is stored as a baseline and
   **no** alert is sent; you only hear about changes from then on.
+- **Episode** alerts fire for `next`/`last_episode_to_air` on or within
+  `EPISODE_ALERT_WINDOW_DAYS` (3) of the air date, so a delayed or missed daily
+  run still catches it; each episode is announced once. The episode that was
+  already "next" when you added the show is treated as known and only alerts
+  once it actually airs.
 - If a change is found but no Telegram target exists yet (nobody has run
   `/start` and `TELEGRAM_CHAT_ID` is unset), the alert is retried on the next
   run rather than lost.

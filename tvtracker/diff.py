@@ -7,12 +7,46 @@ The very first observation of a title returns no changes (baseline only).
 """
 from datetime import date
 
+# How many days after an episode's air date we'll still send a "new episode"
+# alert (covers the daily run being delayed or a missed run or two).
+EPISODE_ALERT_WINDOW_DAYS = 3
+
 
 def _today() -> str:
     return date.today().isoformat()
 
 
+def _within_days(air_date: str, today: str, n: int) -> bool:
+    try:
+        aired = date.fromisoformat(air_date)
+        now = date.fromisoformat(today)
+    except (TypeError, ValueError):
+        return False
+    return 0 <= (now - aired).days <= n
+
+
 # --------------------------------------------------------------------------- TV
+
+def _episode(ep: dict):
+    """Reduce a TMDB last/next_episode_to_air object."""
+    if not ep:
+        return None
+    s, n = ep.get("season_number"), ep.get("episode_number")
+    if s is None or n is None:
+        return None
+    return {
+        "key": f"S{int(s):02d}E{int(n):02d}",
+        "name": ep.get("name") or None,
+        "air_date": ep.get("air_date") or None,
+    }
+
+
+def _current_episode_keys(snap: dict, aired_only: bool = False):
+    eps = [snap.get("last_episode")]
+    if not aired_only:
+        eps.append(snap.get("next_episode"))
+    return [ep["key"] for ep in eps if ep and ep.get("key")]
+
 
 def tv_snapshot(details: dict) -> dict:
     """Reduce a TMDB /tv/{id} response."""
@@ -22,21 +56,27 @@ def tv_snapshot(details: dict) -> dict:
         if num is None or num == 0:  # skip "Specials"
             continue
         seasons[str(num)] = s.get("air_date") or None
-    nxt = details.get("next_episode_to_air") or {}
     return {
         "kind": "tv",
         "name": details.get("name"),
         "status": details.get("status"),
         "number_of_seasons": details.get("number_of_seasons"),
         "seasons": seasons,  # {"1": "2011-04-17", "2": None, ...}
-        "next_episode_air_date": nxt.get("air_date"),
+        "last_episode": _episode(details.get("last_episode_to_air")),
+        "next_episode": _episode(details.get("next_episode_to_air")),
+        "notified_episodes": [],  # episode keys we've already alerted on
     }
 
 
 def diff_tv(old, new, today=None):
     today = today or _today()
+
     if not old:
+        # baseline: remember only the already-aired episode, so the next one
+        # still triggers an alert on the day it airs
+        new["notified_episodes"] = _current_episode_keys(new, aired_only=True)
         return []
+
     changes = []
     old_seasons = old.get("seasons", {})
     new_seasons = new.get("seasons", {})
@@ -61,6 +101,28 @@ def diff_tv(old, new, today=None):
     if old.get("status") != new.get("status") and new.get("status") == "Returning Series" \
             and old.get("status") in ("Ended", "Canceled"):
         changes.append(f"Show status: {old.get('status')} -> Returning Series")
+
+    # --- new episode, on/around its air date ---
+    if "notified_episodes" not in old:
+        # first run after this feature shipped: seed, don't backfill
+        notified = _current_episode_keys(new, aired_only=True)
+    else:
+        notified = list(old.get("notified_episodes", []))
+        for ep in (new.get("next_episode"), new.get("last_episode")):
+            if not ep or not ep.get("key"):
+                continue
+            ad = ep.get("air_date")
+            if not ad or ad > today:
+                continue  # not out yet
+            if ep["key"] in notified:
+                continue
+            if not _within_days(ad, today, EPISODE_ALERT_WINDOW_DAYS):
+                continue  # too old to be worth an alert
+            name = ep.get("name") or "new episode"
+            when = "airs today" if ad == today else f"aired {ad}"
+            changes.append(f'New episode {ep["key"]}: "{name}" - {when}')
+            notified.append(ep["key"])
+    new["notified_episodes"] = notified[-20:]
 
     return changes
 
