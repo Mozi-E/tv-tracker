@@ -8,7 +8,8 @@
     182911142,
     182911143,
     182911144,
-    182911145
+    182911145,
+    182911146
   ],
   "subscribers": [
     5179879702
@@ -57,19 +58,6 @@
         "1": "2023-01-26",
         "2": "2024-10-15",
         "3": "2026-01-27"
-      },
-      "status": "Returning Series"
-    },
-    "tv:52425": {
-      "kind": "tv",
-      "last_episode": null,
-      "name": "Ring of Power - The Empire of the City",
-      "next_episode": null,
-      "notified_episodes": [],
-      "number_of_seasons": 2,
-      "seasons": {
-        "1": null,
-        "2": null
       },
       "status": "Returning Series"
     },
