@@ -3,8 +3,8 @@
     {
       "id": "cloudflare-pat",
       "title": "Renew the GitHub PAT used by the Cloudflare Worker (GH_TOKEN)",
-      "due": "2026-12-01",
-      "notes": "!! Set this 'due' date to the real expiry shown on your token at github.com/settings/personal-access-tokens. When it expires the Worker gets HTTP 401 and /add etc. stop being instant (the daily cron still works). Fix: create a new fine-grained PAT with Contents: write on Mozi-E/tv-tracker, then Cloudflare -> Worker -> Settings -> Variables and Secrets -> edit GH_TOKEN. Then bump this date +90 days and commit.",
+      "due": "2026-11-29",
+      "notes": "PAT expires 2026-11-29. When it expires the Worker gets HTTP 401 and /add etc. stop being instant (the daily cron still works). Fix: create a new fine-grained PAT with Contents: write on Mozi-E/tv-tracker, then Cloudflare -> Worker -> Settings -> Variables and Secrets -> edit GH_TOKEN. Then bump this date to the new expiry and commit.",
       "notified": [],
       "due_seen": null
     },
