@@ -12,7 +12,9 @@ import tempfile
 
 os.environ.setdefault("TV_TRACKER_DATA_DIR", tempfile.mkdtemp(prefix="tvt-"))
 
-from tvtracker import commands, store, tmdb
+from datetime import date
+
+from tvtracker import commands, maintenance, store, tmdb
 from tvtracker.diff import diff_movie, diff_tv, movie_snapshot, tv_snapshot
 
 PASS = 0
@@ -233,11 +235,52 @@ def test_url_parsing_and_add():
           '<a href="https://www.themoviedb.org/tv/1399"' in r[0][1] and r[0][2] == "HTML")
 
 
+def test_maintenance():
+    print("Maintenance reminders")
+
+    def task(due):
+        return {"id": "pat", "title": "Renew PAT", "due": due,
+                "notes": "do the thing", "notified": [], "due_seen": None}
+
+    T = date(2026, 11, 1)
+
+    t = task("2026-12-01")  # 30 days out
+    check("nothing at 30 days", maintenance.scan([t], date(2026, 11, 1)) == [])
+
+    pend = maintenance.scan([t], date(2026, 11, 12))  # 19 days out
+    check("fires at <=20 days", len(pend) == 1 and "in 19 days" in pend[0][2])
+    maintenance.mark(t, pend[0][1])
+    check("20-milestone recorded", "20" in t["notified"])
+    check("no re-fire at 15 days", maintenance.scan([t], date(2026, 11, 16)) == [])
+
+    pend = maintenance.scan([t], date(2026, 11, 22))  # 9 days
+    check("fires at <=10 days", len(pend) == 1 and pend[0][1] == "10")
+    maintenance.mark(t, "10")
+
+    pend = maintenance.scan([t], date(2026, 11, 30))  # 1 day
+    check("fires at 1 day ('due tomorrow')", pend and "due tomorrow" in pend[0][2])
+    maintenance.mark(t, "1")
+    check("all milestones done", set(t["notified"]) == {"1", "10", "20"})
+
+    pend = maintenance.scan([t], date(2026, 12, 5))  # overdue
+    check("overdue fires once", pend and pend[0][1] == "overdue" and "OVERDUE" in pend[0][2])
+    maintenance.mark(t, "overdue")
+    check("overdue not repeated", maintenance.scan([t], date(2026, 12, 6)) == [])
+
+    t["due"] = "2027-06-01"  # user pushed the date out
+    check("editing due re-arms", maintenance.scan([t], date(2027, 5, 20)) != [])
+    check("re-arm cleared old milestones", "overdue" not in t["notified"])
+
+    bad = {"id": "x", "title": "no date", "due": None}
+    check("missing due is skipped", maintenance.scan([bad], T) == [])
+
+
 if __name__ == "__main__":
     test_tv_snapshot_and_diff()
     test_movie_snapshot_and_diff()
     test_store_roundtrip()
     test_commands()
     test_url_parsing_and_add()
+    test_maintenance()
     print(f"\n{PASS} passed, {FAIL} failed")
     sys.exit(1 if FAIL else 0)

@@ -17,6 +17,10 @@ def _state_path() -> str:
     return os.path.join(config.data_dir(), "state.json")
 
 
+def _maintenance_path() -> str:
+    return os.path.join(config.data_dir(), "maintenance.json")
+
+
 def _load(path: str, default):
     try:
         with open(path, "r", encoding="utf-8") as f:
@@ -55,6 +59,16 @@ def load_state() -> dict:
 
 def save_state(data: dict) -> None:
     _atomic_write(_state_path(), data)
+
+
+def load_maintenance() -> dict:
+    data = _load(_maintenance_path(), {"tasks": []})
+    data.setdefault("tasks", [])
+    return data
+
+
+def save_maintenance(data: dict) -> None:
+    _atomic_write(_maintenance_path(), data)
 
 
 def key_for(media_type: str, tmdb_id) -> str:

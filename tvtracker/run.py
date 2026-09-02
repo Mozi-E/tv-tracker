@@ -8,13 +8,15 @@ import json
 import os
 import sys
 
-from . import config, telegram, tmdb
+from . import config, maintenance, telegram, tmdb
 from .commands import handle_update
 from .diff import diff_movie, diff_tv, movie_snapshot, tv_snapshot
 from .store import (
     key_for,
+    load_maintenance,
     load_state,
     load_titles,
+    save_maintenance,
     save_state,
     save_titles,
 )
@@ -139,6 +141,20 @@ def run_checks(titles_data: dict, state: dict) -> None:
         del st_titles[stale]
 
 
+def run_maintenance(state: dict) -> None:
+    data = load_maintenance()
+    pending = maintenance.scan(data["tasks"])
+    for task, milestone, text in pending:
+        print(f"[maintenance] due: {task.get('id', task.get('title'))} ({milestone})")
+        if _notify(state, "\U0001f527 " + text):
+            maintenance.mark(task, milestone)
+        else:
+            print("[maintenance] reminder not delivered, will retry next run")
+    if not pending:
+        print(f"[maintenance] {len(data['tasks'])} task(s), nothing due")
+    save_maintenance(data)
+
+
 def main(argv=None) -> None:
     argv = list(sys.argv[1:] if argv is None else argv)
     titles_data = load_titles()
@@ -148,6 +164,8 @@ def main(argv=None) -> None:
         process_commands(titles_data, state)
     if "--no-check" not in argv:
         run_checks(titles_data, state)
+    if "--no-maintenance" not in argv:
+        run_maintenance(state)
 
     save_titles(titles_data)
     save_state(state)

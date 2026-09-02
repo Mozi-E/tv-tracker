@@ -115,6 +115,12 @@ python check.py           # a real run against TMDB + Telegram using your .env
 `check.py` accepts `--no-telegram` (skip reading/sending Telegram) and
 `--no-check` (skip the TMDB comparison) for debugging.
 
+## Maintenance
+
+Close to none - see [`MAINTENANCE.md`](MAINTENANCE.md). Dated upkeep tasks live
+in [`data/maintenance.json`](data/maintenance.json) and the bot messages you
+20 / 10 / 1 days before each one (and if it goes overdue).
+
 ## Notes and limitations
 
 - **Sequels** are detected via TMDB "collections". A standalone film that is
