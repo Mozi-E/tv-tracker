@@ -60,18 +60,19 @@
     "tv:97546": {
       "kind": "tv",
       "last_episode": {
-        "air_date": "2026-08-25",
-        "key": "S04E04",
-        "name": "Greyhounds' Day Off"
-      },
-      "name": "Ted Lasso",
-      "next_episode": {
         "air_date": "2026-09-01",
         "key": "S04E05",
         "name": "Riches of Embarrassment"
       },
+      "name": "Ted Lasso",
+      "next_episode": {
+        "air_date": "2026-09-08",
+        "key": "S04E06",
+        "name": "Don't Jump Around Much Anymore"
+      },
       "notified_episodes": [
-        "S04E04"
+        "S04E04",
+        "S04E05"
       ],
       "number_of_seasons": 4,
       "seasons": {
