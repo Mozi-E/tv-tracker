@@ -9,7 +9,8 @@
     182911143,
     182911144,
     182911145,
-    182911146
+    182911146,
+    182911147
   ],
   "subscribers": [
     5179879702
@@ -58,6 +59,30 @@
         "1": "2023-01-26",
         "2": "2024-10-15",
         "3": "2026-01-27"
+      },
+      "status": "Returning Series"
+    },
+    "tv:84773": {
+      "kind": "tv",
+      "last_episode": {
+        "air_date": "2024-10-03",
+        "key": "S02E08",
+        "name": "Shadow and Flame"
+      },
+      "name": "The Lord of the Rings: The Rings of Power",
+      "next_episode": {
+        "air_date": "2026-11-11",
+        "key": "S03E01",
+        "name": "Episode 1"
+      },
+      "notified_episodes": [
+        "S02E08"
+      ],
+      "number_of_seasons": 3,
+      "seasons": {
+        "1": "2022-08-31",
+        "2": "2024-08-29",
+        "3": "2026-11-10"
       },
       "status": "Returning Series"
     },
