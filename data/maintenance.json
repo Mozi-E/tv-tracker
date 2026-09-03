@@ -1,20 +1,20 @@
 {
   "tasks": [
     {
-      "id": "cloudflare-pat",
-      "title": "Renew the GitHub PAT used by the Cloudflare Worker (GH_TOKEN)",
       "due": "2026-11-29",
+      "due_seen": "2026-11-29",
+      "id": "cloudflare-pat",
       "notes": "PAT expires 2026-11-29. When it expires the Worker gets HTTP 401 and /add etc. stop being instant (the daily cron still works). Fix: create a new fine-grained PAT with Contents: write on Mozi-E/tv-tracker, then Cloudflare -> Worker -> Settings -> Variables and Secrets -> edit GH_TOKEN. Then bump this date to the new expiry and commit.",
       "notified": [],
-      "due_seen": null
+      "title": "Renew the GitHub PAT used by the Cloudflare Worker (GH_TOKEN)"
     },
     {
-      "id": "rotate-secrets",
-      "title": "Annual rotation: bot token + webhook secret",
       "due": "2027-09-01",
+      "due_seen": "2027-09-01",
+      "id": "rotate-secrets",
       "notes": "Once a year: @BotFather /revoke -> update TELEGRAM_BOT_TOKEN in GitHub Secrets. New `openssl rand -hex 32` -> update TELEGRAM_SECRET_TOKEN in Cloudflare AND re-run setWebhook with it. Then bump this date +1 year and commit.",
       "notified": [],
-      "due_seen": null
+      "title": "Annual rotation: bot token + webhook secret"
     }
   ]
 }
