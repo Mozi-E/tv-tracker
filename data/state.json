@@ -21,15 +21,15 @@
     "tv:125988": {
       "kind": "tv",
       "last_episode": {
-        "air_date": "2026-08-27",
-        "key": "S03E09",
-        "name": "Farewell"
-      },
-      "name": "Silo",
-      "next_episode": {
         "air_date": "2026-09-03",
         "key": "S03E10",
         "name": "Troy"
+      },
+      "name": "Silo",
+      "next_episode": {
+        "air_date": "2027-07-08",
+        "key": "S04E01",
+        "name": "Episode 1"
       },
       "notified_episodes": [
         "S03E09",
@@ -40,7 +40,7 @@
         "1": "2023-05-04",
         "2": "2024-11-14",
         "3": "2026-07-02",
-        "4": null
+        "4": "2027-07-08"
       },
       "status": "Returning Series"
     },
