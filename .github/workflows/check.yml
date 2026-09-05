@@ -44,7 +44,7 @@ jobs:
         run: |
           git config user.name "tv-tracker-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/titles.json data/state.json data/maintenance.json
+          git add data/titles.json data/state.json data/maintenance.json data/invites.json
           if git diff --cached --quiet; then
             echo "No changes to commit."
           else

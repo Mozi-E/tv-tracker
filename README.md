@@ -93,10 +93,27 @@ check.
 /add movie 603                                   track by exact TMDB id
 /list                                            show everything you track
 /remove 2                                        stop tracking item #2 from /list
+/invite [uses] [days]                            (admin) share-link, default 1 use / 7 days
 /help                                            command reference
 ```
 
 Replies and alerts link each title straight to its TMDB page.
+
+### Access control
+
+The bot is invite-only. The very first person to message it becomes its
+**admin** (no setup needed - this happens automatically on a fresh
+deployment). An admin runs `/invite` to get a link like
+`https://t.me/<bot_username>?start=<token>`; whoever opens it and taps
+**Start** gets access immediately, no further action from you or them. By
+default a link is good for 1 use and expires in 7 days -
+`/invite 5 30` makes one good for 5 uses over 30 days.
+
+Access is enforced by the bot itself (`tvtracker/commands.py`: `admins` /
+`subscribers` / invite tokens in `data/state.json` and `data/invites.json`),
+not by the Cloudflare Worker - the Worker forwards every message it receives
+and lets the bot decide. Everyone who's in shares one watch-list and gets
+every alert (see [Notes and limitations](#notes-and-limitations)).
 
 ## Local development
 

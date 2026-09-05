@@ -13,16 +13,18 @@ from .commands import handle_update
 from .diff import diff_movie, diff_tv, movie_snapshot, tv_snapshot
 from .store import (
     key_for,
+    load_invites,
     load_maintenance,
     load_state,
     load_titles,
+    save_invites,
     save_maintenance,
     save_state,
     save_titles,
 )
 
 
-def process_commands(titles_data: dict, state: dict) -> None:
+def process_commands(titles_data: dict, state: dict, invites: dict) -> None:
     """Handle Telegram messages.
 
     Three modes:
@@ -40,7 +42,7 @@ def process_commands(titles_data: dict, state: dict) -> None:
             print(f"[telegram] bad TELEGRAM_UPDATE_JSON: {e}")
             return
         updates = payload if isinstance(payload, list) else [payload]
-        _handle_updates(updates, titles_data, state, webhook=True)
+        _handle_updates(updates, titles_data, state, invites, webhook=True)
         return
 
     if os.environ.get("TELEGRAM_WEBHOOK_MODE", "").strip():
@@ -52,10 +54,10 @@ def process_commands(titles_data: dict, state: dict) -> None:
     except telegram.TelegramError as e:
         print(f"[telegram] getUpdates failed: {e}")
         return
-    _handle_updates(updates, titles_data, state, webhook=False)
+    _handle_updates(updates, titles_data, state, invites, webhook=False)
 
 
-def _handle_updates(updates, titles_data: dict, state: dict, webhook: bool) -> None:
+def _handle_updates(updates, titles_data: dict, state: dict, invites: dict, webhook: bool) -> None:
     seen = state.setdefault("recent_update_ids", [])
     handled = 0
     for up in updates:
@@ -68,7 +70,7 @@ def _handle_updates(updates, titles_data: dict, state: dict, webhook: bool) -> N
         if not webhook and uid is not None:
             state["telegram_offset"] = uid + 1
         try:
-            replies = handle_update(up, titles_data, state)
+            replies = handle_update(up, titles_data, state, invites)
         except Exception as e:  # one bad message must not abort the run
             print(f"[commands] error on update {uid}: {e}")
             replies = []
@@ -159,9 +161,10 @@ def main(argv=None) -> None:
     argv = list(sys.argv[1:] if argv is None else argv)
     titles_data = load_titles()
     state = load_state()
+    invites = load_invites()
 
     if "--no-telegram" not in argv:
-        process_commands(titles_data, state)
+        process_commands(titles_data, state, invites)
     if "--no-check" not in argv:
         run_checks(titles_data, state)
     if "--no-maintenance" not in argv:
@@ -169,6 +172,7 @@ def main(argv=None) -> None:
 
     save_titles(titles_data)
     save_state(state)
+    save_invites(invites)
     print("done.")
 
 

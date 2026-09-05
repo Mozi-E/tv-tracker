@@ -17,7 +17,12 @@
  *   GH_APP_PRIVATE_KEY       the App's private key, PKCS#8 PEM (see webhook/README.md)
  *   GH_REPO                  "Mozi-E/tv-tracker"
  *   TELEGRAM_SECRET_TOKEN    random string; also passed to Telegram setWebhook
- *   ALLOWED_USER_IDS         optional, comma-separated Telegram user ids allowed to use the bot
+ *
+ * Who's allowed to use the bot is decided by the Python side (admins /
+ * subscribers / invite links in tvtracker/commands.py), not here - the Worker
+ * forwards every legitimate Telegram message and lets check.py decide. Do NOT
+ * set an ALLOWED_USER_IDS var here: it would block invited users' /start
+ * before Python ever sees it.
  */
 
 function base64url(input) {
@@ -99,14 +104,6 @@ export default {
     const msg = update.message;
     if (!msg || typeof msg.text !== "string") {
       return new Response("ignored (no text message)", { status: 200 });
-    }
-
-    if (env.ALLOWED_USER_IDS) {
-      const allowed = env.ALLOWED_USER_IDS.split(",").map((s) => s.trim());
-      const fromId = String(msg.from && msg.from.id);
-      if (!allowed.includes(fromId)) {
-        return new Response("ignored (user not allowed)", { status: 200 });
-      }
     }
 
     let token;

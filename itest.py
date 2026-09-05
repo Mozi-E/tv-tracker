@@ -36,6 +36,7 @@ def stub_send_message(chat_id, text, parse_mode=None):
 
 telegram.get_updates = stub_get_updates
 telegram.send_message = stub_send_message
+telegram.get_me = lambda: {"username": "elior_tvtracker_bot"}
 
 # --- fake TMDB world -------------------------------------------------------
 TV = {
@@ -158,6 +159,38 @@ print("Run 8: same episode still latest tomorrow - no repeat")
 sent.clear()
 run.main([])
 check("no repeat episode alert", sent == [])
+
+print("Run 9: admin (777) creates an invite link over webhook")
+sent.clear()
+os.environ["TELEGRAM_WEBHOOK_MODE"] = "1"
+os.environ["TELEGRAM_UPDATE_JSON"] = json.dumps(
+    {"update_id": 9001, "message": {"text": "/invite", "chat": {"id": 777}}}
+)
+run.main(["--no-check"])
+check("invite link sent to the admin", sent and "t.me/elior_tvtracker_bot?start=" in sent[0][1])
+invite_token = sent[0][1].split("start=")[1].split()[0]
+check("invite persisted to invites.json", invite_token in load("invites.json")["invites"])
+
+print("Run 10: a brand-new user redeems the invite over webhook")
+sent.clear()
+os.environ["TELEGRAM_UPDATE_JSON"] = json.dumps(
+    {"update_id": 9002, "message": {"text": f"/start {invite_token}", "chat": {"id": 4242}}}
+)
+run.main(["--no-check"])
+check("new user welcomed", sent and "You're in" in sent[0][1])
+check("new user now a subscriber", 4242 in load("state.json")["subscribers"])
+check("new user is not an admin", 4242 not in load("state.json").get("admins", []))
+
+print("Run 11: a stranger with no invite is turned away over webhook")
+sent.clear()
+os.environ["TELEGRAM_UPDATE_JSON"] = json.dumps(
+    {"update_id": 9003, "message": {"text": "hi", "chat": {"id": 5555}}}
+)
+run.main(["--no-check"])
+check("stranger told it's invite-only", sent and "invite-only" in sent[0][1])
+check("stranger not subscribed", 5555 not in load("state.json")["subscribers"])
+del os.environ["TELEGRAM_WEBHOOK_MODE"]
+del os.environ["TELEGRAM_UPDATE_JSON"]
 
 print(f"\n{'FAILED' if fails else 'PASSED'} ({fails} failing)")
 sys.exit(1 if fails else 0)

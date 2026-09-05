@@ -77,10 +77,13 @@ anything else.
    | `GH_APP_INSTALLATION_ID` | Text | the installation ID from step 1 |
    | `GH_APP_PRIVATE_KEY` | Secret | the PKCS#8 PEM from step 1 (multi-line, paste as-is) |
    | `TELEGRAM_SECRET_TOKEN` | Secret | your `WEBHOOK_SECRET` |
-   | `ALLOWED_USER_IDS` | Secret | *(optional)* your numeric Telegram user id |
 
-   If you're migrating from the old PAT setup: delete the `GH_TOKEN` variable,
-   it's no longer used.
+   If you're migrating from the old PAT setup: delete `GH_TOKEN` and
+   `ALLOWED_USER_IDS` if present - neither is used any more. Who can use the
+   bot is now decided in Python (`tvtracker/commands.py`: admins, subscribers,
+   `/invite` links) so that new people can self-onboard through a link. An
+   `ALLOWED_USER_IDS` var here would silently block every invited stranger's
+   `/start` before Python ever saw it.
 4. Note the URL: `https://tv-tracker-webhook.<your-subdomain>.workers.dev`.
 
 ### Option B - wrangler CLI
@@ -90,7 +93,6 @@ cd webhook
 npx wrangler login
 npx wrangler secret put GH_APP_PRIVATE_KEY      # paste the PKCS#8 PEM
 npx wrangler secret put TELEGRAM_SECRET_TOKEN   # paste WEBHOOK_SECRET
-npx wrangler secret put ALLOWED_USER_IDS        # optional
 ```
 
 Edit `GH_APP_ID` and `GH_APP_INSTALLATION_ID` into `wrangler.toml` (or set them

@@ -7,8 +7,10 @@ clickable TMDB links. Only /add reaches out to TMDB (to resolve a name or a
 URL to an id at add time).
 """
 import html
+import secrets as _secrets
+from datetime import date, timedelta
 
-from . import tmdb
+from . import tmdb, telegram
 from .store import key_for
 
 HELP = (
@@ -21,17 +23,26 @@ HELP = (
     "/list              - show everything you track\n"
     "/remove &lt;number&gt;   - stop tracking item &lt;number&gt; from /list\n"
     "/help              - show this message\n"
+    "/invite [uses] [days] - (admin only) create a share link, default 1 use / 7 days\n"
     "\n"
     "Once a day I check TMDB. When a new season is announced or released, "
     "or a sequel shows up, I message you here."
 )
+
+NOT_INVITED = (
+    "This bot is invite-only. Ask whoever told you about it to send you an "
+    "invite link (/invite)."
+)
+
+DEFAULT_INVITE_USES = 1
+DEFAULT_INVITE_DAYS = 7
 
 
 def _link(media_type: str, tmdb_id, label: str) -> str:
     return f'<a href="{tmdb.web_url(media_type, tmdb_id)}">{html.escape(label)}</a>'
 
 
-def handle_update(update: dict, titles_data: dict, state: dict):
+def handle_update(update: dict, titles_data: dict, state: dict, invites: dict):
     msg = update.get("message") or {}
     chat = msg.get("chat") or {}
     chat_id = chat.get("id")
@@ -39,15 +50,23 @@ def handle_update(update: dict, titles_data: dict, state: dict):
     if chat_id is None or not text:
         return []
 
+    tokens = text.split()
+    cmd = tokens[0].lower().split("@", 1)[0] if tokens else ""  # strip @BotName in groups
+    args = tokens[1:]
+
     if chat_id not in state["subscribers"]:
-        state["subscribers"].append(chat_id)
+        # bootstrap: on a brand-new deployment, the first person to talk to
+        # the bot becomes its admin - no manual state.json edit required.
+        if not state["subscribers"] and not state.get("admins"):
+            state["subscribers"].append(chat_id)
+            state.setdefault("admins", []).append(chat_id)
+            return [(chat_id, "You're the first user, so I made you the admin.\n\n" + HELP, "HTML")]
+        if cmd == "/start" and args:
+            return _redeem_invite(args[0], chat_id, state, invites)
+        return [(chat_id, NOT_INVITED)]
 
     if not text.startswith("/"):
         return [(chat_id, "Send /help to see what I can do.")]
-
-    tokens = text.split()
-    cmd = tokens[0].lower().split("@", 1)[0]  # strip @BotName in groups
-    args = tokens[1:]
 
     if cmd in ("/start", "/help"):
         return [(chat_id, HELP, "HTML")]
@@ -57,7 +76,68 @@ def handle_update(update: dict, titles_data: dict, state: dict):
         return _cmd_add(args, chat_id, titles_data)
     if cmd == "/remove":
         return _cmd_remove(args, chat_id, titles_data)
+    if cmd == "/invite":
+        return _cmd_invite(args, chat_id, state, invites)
     return [(chat_id, f"Unknown command {cmd}. Try /help.")]
+
+
+# -------------------------------------------------------------------- invite
+
+def _redeem_invite(token, chat_id, state, invites):
+    inv = invites.get("invites", {}).get(token)
+    if not inv:
+        return [(chat_id, "That invite link is invalid.")]
+    if inv.get("expires") and date.today().isoformat() > inv["expires"]:
+        return [(chat_id, "That invite link has expired. Ask for a new one.")]
+    if inv.get("uses", 0) >= inv.get("max_uses", DEFAULT_INVITE_USES):
+        return [(chat_id, "That invite link has already been used up.")]
+
+    inv["uses"] = inv.get("uses", 0) + 1
+    inv.setdefault("used_by", []).append(chat_id)
+    state["subscribers"].append(chat_id)
+    return [(chat_id, "You're in!\n\n" + HELP, "HTML")]
+
+
+def _cmd_invite(args, chat_id, state, invites):
+    if chat_id not in state.get("admins", []):
+        return [(chat_id, "Only an admin can create invite links. Ask them for one.")]
+
+    max_uses = int(args[0]) if len(args) >= 1 and args[0].isdigit() else DEFAULT_INVITE_USES
+    days = int(args[1]) if len(args) >= 2 and args[1].isdigit() else DEFAULT_INVITE_DAYS
+    token = _secrets.token_urlsafe(6)
+    expires = (date.today() + timedelta(days=days)).isoformat()
+    invites.setdefault("invites", {})[token] = {
+        "created_by": chat_id,
+        "max_uses": max_uses,
+        "uses": 0,
+        "expires": expires,
+    }
+
+    username = state.get("bot_username")
+    if not username:
+        try:
+            username = telegram.get_me().get("username")
+            if username:
+                state["bot_username"] = username
+        except telegram.TelegramError:
+            username = None
+
+    if not username:
+        return [
+            (
+                chat_id,
+                f"Invite token (couldn't look up the bot's @username - build the "
+                f"link yourself): {token}\nValid for {max_uses} use(s), expires {expires}.",
+            )
+        ]
+    link = f"https://t.me/{username}?start={token}"
+    return [
+        (
+            chat_id,
+            f"Invite link, {max_uses} use(s), expires {expires}:\n{link}\n\n"
+            "Whoever opens it and taps Start gets access - no other setup needed.",
+        )
+    ]
 
 
 # ----------------------------------------------------------------------- add

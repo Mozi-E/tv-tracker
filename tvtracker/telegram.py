@@ -24,6 +24,10 @@ def _api(method: str, **params):
     return data["result"]
 
 
+def get_me():
+    return _api("getMe")
+
+
 def get_updates(offset: int = 0, timeout: int = 0):
     """Long-poll-free fetch of pending messages (workflow runs are short-lived)."""
     return _api(

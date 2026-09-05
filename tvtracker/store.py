@@ -21,6 +21,10 @@ def _maintenance_path() -> str:
     return os.path.join(config.data_dir(), "maintenance.json")
 
 
+def _invites_path() -> str:
+    return os.path.join(config.data_dir(), "invites.json")
+
+
 def _load(path: str, default):
     try:
         with open(path, "r", encoding="utf-8") as f:
@@ -52,6 +56,8 @@ def load_state() -> dict:
     data = _load(_state_path(), {})
     data.setdefault("telegram_offset", 0)
     data.setdefault("subscribers", [])
+    data.setdefault("admins", [])
+    data.setdefault("bot_username", None)
     data.setdefault("recent_update_ids", [])
     data.setdefault("titles", {})
     return data
@@ -69,6 +75,16 @@ def load_maintenance() -> dict:
 
 def save_maintenance(data: dict) -> None:
     _atomic_write(_maintenance_path(), data)
+
+
+def load_invites() -> dict:
+    data = _load(_invites_path(), {"invites": {}})
+    data.setdefault("invites", {})
+    return data
+
+
+def save_invites(data: dict) -> None:
+    _atomic_write(_invites_path(), data)
 
 
 def key_for(media_type: str, tmdb_id) -> str:

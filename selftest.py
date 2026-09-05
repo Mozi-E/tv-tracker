@@ -12,9 +12,9 @@ import tempfile
 
 os.environ.setdefault("TV_TRACKER_DATA_DIR", tempfile.mkdtemp(prefix="tvt-"))
 
-from datetime import date
+from datetime import date, timedelta
 
-from tvtracker import commands, maintenance, store, tmdb
+from tvtracker import commands, maintenance, store, telegram, tmdb
 from tvtracker.diff import diff_movie, diff_tv, movie_snapshot, tv_snapshot
 
 PASS = 0
@@ -157,27 +157,36 @@ def _update(text, chat_id=555):
     return {"update_id": 1, "message": {"text": text, "chat": {"id": chat_id}}}
 
 
+def _fresh_state():
+    return {"telegram_offset": 0, "subscribers": [], "admins": [], "recent_update_ids": [], "titles": {}}
+
+
 def test_commands():
     print("Telegram command handler")
     titles = {"titles": []}
-    state = {"telegram_offset": 0, "subscribers": [], "titles": {}}
+    state = _fresh_state()
+    invites = {"invites": {}}
 
-    r = commands.handle_update(_update("/help"), titles, state)
-    check("/help replies", r and "Tracker" in r[0][1])
+    r = commands.handle_update(_update("/help"), titles, state, invites)
+    check("first-ever message bootstraps sender as admin", r and "first user" in r[0][1])
     check("sender auto-subscribed", 555 in state["subscribers"])
+    check("sender made admin", 555 in state["admins"])
 
-    r = commands.handle_update(_update("/list"), titles, state)
+    r = commands.handle_update(_update("/help"), titles, state, invites)
+    check("/help replies", r and "Tracker" in r[0][1])
+
+    r = commands.handle_update(_update("/list"), titles, state, invites)
     check("/list empty", "not tracking anything" in r[0][1])
 
     # stub TMDB: single strong match
     tmdb.search = lambda q, limit=5: [
         {"id": 603, "media_type": "movie", "title": "The Matrix", "year": "1999", "popularity": 90}
     ]
-    r = commands.handle_update(_update("/add the matrix"), titles, state)
+    r = commands.handle_update(_update("/add the matrix"), titles, state, invites)
     check("/add single match adds it", any(t["id"] == 603 for t in titles["titles"]))
     check("/add confirms", "Now tracking" in r[0][1])
 
-    r = commands.handle_update(_update("/add the matrix"), titles, state)
+    r = commands.handle_update(_update("/add the matrix"), titles, state, invites)
     check("/add duplicate rejected", "Already tracking" in r[0][1])
 
     # stub TMDB: multiple matches -> disambiguation
@@ -185,28 +194,75 @@ def test_commands():
         {"id": 1, "media_type": "tv", "title": "Dune: Prophecy", "year": "2024", "popularity": 50},
         {"id": 2, "media_type": "movie", "title": "Dune", "year": "2021", "popularity": 80},
     ]
-    r = commands.handle_update(_update("/add dune"), titles, state)
+    r = commands.handle_update(_update("/add dune"), titles, state, invites)
     check("/add multi -> choices listed", "/add movie 2" in r[0][1] and "/add tv 1" in r[0][1])
     check("/add multi -> nothing added yet", all(t["id"] not in (1, 2) for t in titles["titles"]))
 
     # explicit id form
     tmdb.tv_details = lambda i: {"name": "Dune: Prophecy", "seasons": [], "status": "Returning Series", "number_of_seasons": 1}
-    r = commands.handle_update(_update("/add tv 1"), titles, state)
+    r = commands.handle_update(_update("/add tv 1"), titles, state, invites)
     check("/add tv <id> adds it", any(t["id"] == 1 and t["media_type"] == "tv" for t in titles["titles"]))
 
-    r = commands.handle_update(_update("/list"), titles, state)
+    r = commands.handle_update(_update("/list"), titles, state, invites)
     check("/list shows two items", r[0][1].count("/remove") == 2)
     check("/list items are TMDB hyperlinks",
           '<a href="https://www.themoviedb.org/' in r[0][1] and r[0][2] == "HTML")
 
-    r = commands.handle_update(_update("/remove 1"), titles, state)
+    r = commands.handle_update(_update("/remove 1"), titles, state, invites)
     check("/remove by number works", len(titles["titles"]) == 1 and "Stopped tracking" in r[0][1])
 
-    r = commands.handle_update(_update("/remove 9"), titles, state)
+    r = commands.handle_update(_update("/remove 9"), titles, state, invites)
     check("/remove out of range handled", "no item #9" in r[0][1])
 
-    r = commands.handle_update(_update("hello there"), titles, state)
+    r = commands.handle_update(_update("hello there"), titles, state, invites)
     check("non-command nudges to /help", "/help" in r[0][1])
+
+
+def test_invites():
+    print("Invite links")
+    titles = {"titles": []}
+    state = _fresh_state()
+    invites = {"invites": {}}
+
+    # bootstrap the admin
+    commands.handle_update(_update("/start", chat_id=1), titles, state, invites)
+    check("bootstrap admin", state["admins"] == [1])
+
+    r = commands.handle_update(_update("hello", chat_id=2), titles, state, invites)
+    check("stranger blocked before any invite exists", "invite-only" in r[0][1])
+    check("stranger not subscribed", 2 not in state["subscribers"])
+
+    telegram.get_me = lambda: {"username": "elior_tvtracker_bot"}
+    r = commands.handle_update(_update("/invite", chat_id=1), titles, state, invites)
+    check("admin creates a default invite", "t.me/elior_tvtracker_bot?start=" in r[0][1])
+    token = r[0][1].split("start=")[1].split()[0]
+    check("invite stored with defaults", invites["invites"][token]["max_uses"] == 1)
+
+    r = commands.handle_update(_update(f"/start {token}", chat_id=2), titles, state, invites)
+    check("valid invite grants access", 2 in state["subscribers"])
+    check("welcome message sent", "You're in" in r[0][1])
+
+    r = commands.handle_update(_update("/invite", chat_id=2), titles, state, invites)
+    check("subscribed non-admin can't create invites", "Only an admin" in r[0][1])
+
+    r = commands.handle_update(_update(f"/start {token}", chat_id=3), titles, state, invites)
+    check("exhausted single-use invite rejected", "used up" in r[0][1])
+    check("third stranger not subscribed", 3 not in state["subscribers"])
+
+    r = commands.handle_update(_update("/start not-a-real-token", chat_id=4), titles, state, invites)
+    check("bogus token rejected", "invalid" in r[0][1])
+
+    r = commands.handle_update(_update("/invite 3 30", chat_id=1), titles, state, invites)
+    token2 = r[0][1].split("start=")[1].split()[0]
+    check("custom uses/days honoured", invites["invites"][token2]["max_uses"] == 3)
+    check("custom expiry honoured",
+          invites["invites"][token2]["expires"] == (date.today() + timedelta(days=30)).isoformat())
+
+    expired_token = "expired1"
+    invites["invites"][expired_token] = {"max_uses": 1, "uses": 0, "expires": "2000-01-01"}
+    r = commands.handle_update(_update(f"/start {expired_token}", chat_id=5), titles, state, invites)
+    check("expired invite rejected", "expired" in r[0][1])
+    check("expired-invite user not subscribed", 5 not in state["subscribers"])
 
 
 def test_url_parsing_and_add():
@@ -222,11 +278,14 @@ def test_url_parsing_and_add():
     check("plain text -> None", tmdb.parse_tmdb_url("game of thrones") is None)
 
     titles = {"titles": []}
-    state = {"telegram_offset": 0, "subscribers": [], "recent_update_ids": [], "titles": {}}
+    state = _fresh_state()
+    state["subscribers"] = [555]  # pre-approved, so /add isn't swallowed by bootstrap
+    state["admins"] = [555]
+    invites = {"invites": {}}
     tmdb.tv_details = lambda i: {"name": "Game of Thrones", "seasons": [],
                                 "status": "Ended", "number_of_seasons": 8}
     r = commands.handle_update(
-        _update("/add https://www.themoviedb.org/tv/1399-game-of-thrones"), titles, state
+        _update("/add https://www.themoviedb.org/tv/1399-game-of-thrones"), titles, state, invites
     )
     check("/add <url> tracks the right id",
           titles["titles"] == [{"id": 1399, "media_type": "tv",
@@ -280,6 +339,7 @@ if __name__ == "__main__":
     test_movie_snapshot_and_diff()
     test_store_roundtrip()
     test_commands()
+    test_invites()
     test_url_parsing_and_add()
     test_maintenance()
     print(f"\n{PASS} passed, {FAIL} failed")
