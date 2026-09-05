@@ -12,7 +12,7 @@ from . import config, maintenance, telegram, tmdb
 from .commands import handle_update
 from .diff import diff_movie, diff_tv, movie_snapshot, tv_snapshot
 from .store import (
-    key_for,
+    all_titles_by_key,
     load_invites,
     load_maintenance,
     load_state,
@@ -88,8 +88,10 @@ def _handle_updates(updates, titles_data: dict, state: dict, invites: dict, webh
     print(f"[telegram] processed {handled} update(s) ({'webhook' if webhook else 'poll'})")
 
 
-def _notify(state: dict, text: str, parse_mode: str = None) -> bool:
-    targets = set(state.get("subscribers", []))
+def _notify_targets(chat_ids, text: str, parse_mode: str = None) -> bool:
+    """Send to exactly these chat ids, plus TELEGRAM_CHAT_ID if set (an
+    optional always-cc address, independent of who owns what)."""
+    targets = set(chat_ids)
     cid = config.telegram_chat_id()
     if cid:
         targets.add(int(cid) if cid.lstrip("-").isdigit() else cid)
@@ -101,16 +103,18 @@ def _notify(state: dict, text: str, parse_mode: str = None) -> bool:
         except telegram.TelegramError as e:
             print(f"[telegram] notify {chat_id} failed: {e}")
     if not targets:
-        print("[telegram] no notification target yet (send /start to the bot)")
+        print("[telegram] no notification target for this message")
     return delivered
 
 
 def run_checks(titles_data: dict, state: dict) -> None:
+    """Check every title tracked by anyone, once each, and notify only the
+    user(s) who actually track it."""
     st_titles = state.setdefault("titles", {})
+    by_key, owners = all_titles_by_key(titles_data)
 
-    for t in titles_data["titles"]:
+    for k, t in by_key.items():
         mt, tmdb_id, name = t["media_type"], t["id"], t["title"]
-        k = key_for(mt, tmdb_id)
         try:
             if mt == "tv":
                 snap = tv_snapshot(tmdb.tv_details(tmdb_id))
@@ -131,24 +135,26 @@ def run_checks(titles_data: dict, state: dict) -> None:
                 f'Update for <a href="{link}">{html.escape(name)}</a>:\n'
                 + "\n".join(f"- {html.escape(c)}" for c in changes)
             )
-            print(f"[change] {k}: {changes}")
-            if not _notify(state, body, parse_mode="HTML"):
+            print(f"[change] {k}: {changes} -> {owners.get(k, [])}")
+            if not _notify_targets(owners.get(k, []), body, parse_mode="HTML"):
                 # keep old snapshot so we retry the alert once a target exists
                 print(f"[change] {k}: not delivered, will retry next run")
                 continue
         st_titles[k] = snap
 
-    live = {key_for(t["media_type"], t["id"]) for t in titles_data["titles"]}
-    for stale in [k for k in st_titles if k not in live]:
+    for stale in [k for k in st_titles if k not in by_key]:
         del st_titles[stale]
 
 
 def run_maintenance(state: dict) -> None:
+    """Maintenance reminders are for whoever runs the deployment, not every
+    user of a shared bot - only admins get these."""
     data = load_maintenance()
+    admins = state.get("admins", [])
     pending = maintenance.scan(data["tasks"])
     for task, milestone, text in pending:
         print(f"[maintenance] due: {task.get('id', task.get('title'))} ({milestone})")
-        if _notify(state, "\U0001f527 " + text):
+        if _notify_targets(admins, "\U0001f527 " + text):
             maintenance.mark(task, milestone)
         else:
             print("[maintenance] reminder not delivered, will retry next run")

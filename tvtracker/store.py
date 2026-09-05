@@ -1,7 +1,9 @@
-"""Load/save the two JSON files that live in the repo under `data/`.
+"""Load/save the JSON files that live in the repo under `data/`.
 
-- titles.json : the watch-list, managed by the user over Telegram.
-- state.json  : last-seen TMDB snapshot per title + Telegram bookkeeping.
+- titles.json : one watch-list per Telegram user, managed over Telegram.
+- state.json  : last-seen TMDB snapshot per title (shared - the same movie or
+                show tracked by two people is only fetched from TMDB once) +
+                Telegram bookkeeping (subscribers, admins, ...).
 """
 import json
 import os
@@ -43,13 +45,49 @@ def _atomic_write(path: str, data) -> None:
 
 
 def load_titles() -> dict:
-    data = _load(_titles_path(), {"titles": []})
-    data.setdefault("titles", [])
+    data = _load(_titles_path(), {"users": {}})
+    if "titles" in data and "users" not in data:
+        # one-time migration from the old shared flat-list format: each
+        # entry's 'added_by' becomes that user's own list.
+        migrated = {"users": {}}
+        for t in data.get("titles", []):
+            owner = str(t.get("added_by", "unknown"))
+            entry = {"id": t["id"], "media_type": t["media_type"], "title": t["title"]}
+            migrated["users"].setdefault(owner, {"titles": []})["titles"].append(entry)
+        data = migrated
+    data.setdefault("users", {})
     return data
 
 
 def save_titles(data: dict) -> None:
     _atomic_write(_titles_path(), data)
+
+
+def user_titles(titles_data: dict, chat_id) -> list:
+    """The mutable list of titles a specific user tracks."""
+    users = titles_data.setdefault("users", {})
+    return users.setdefault(str(chat_id), {}).setdefault("titles", [])
+
+
+def all_titles_by_key(titles_data: dict):
+    """Dedupe every user's titles by (media_type, id).
+
+    Returns (by_key, owners): by_key maps a key to one representative title
+    dict (for its id/media_type/title); owners maps the same key to the list
+    of chat ids currently tracking it. A title tracked by two users is only
+    ever checked against TMDB once, but each owner is notified separately.
+    """
+    by_key, owners = {}, {}
+    for uid_str, udata in titles_data.get("users", {}).items():
+        try:
+            uid = int(uid_str)
+        except (TypeError, ValueError):
+            continue
+        for t in (udata or {}).get("titles", []):
+            k = key_for(t["media_type"], t["id"])
+            by_key.setdefault(k, t)
+            owners.setdefault(k, []).append(uid)
+    return by_key, owners
 
 
 def load_state() -> dict:

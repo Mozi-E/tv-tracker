@@ -11,7 +11,7 @@ import secrets as _secrets
 from datetime import date, timedelta
 
 from . import tmdb, telegram
-from .store import key_for
+from .store import key_for, user_titles
 
 HELP = (
     "TV & Movie Tracker\n"
@@ -71,7 +71,7 @@ def handle_update(update: dict, titles_data: dict, state: dict, invites: dict):
     if cmd in ("/start", "/help"):
         return [(chat_id, HELP, "HTML")]
     if cmd == "/list":
-        return [(chat_id, _format_list(titles_data), "HTML")]
+        return [(chat_id, _format_list(titles_data, chat_id), "HTML")]
     if cmd == "/add":
         return _cmd_add(args, chat_id, titles_data)
     if cmd == "/remove":
@@ -186,13 +186,12 @@ def _add_by_id(mt, tmdb_id, chat_id, titles_data):
 
 
 def _do_add(mt, tmdb_id, title, chat_id, titles_data):
+    lst = user_titles(titles_data, chat_id)
     k = key_for(mt, tmdb_id)
-    for t in titles_data["titles"]:
+    for t in lst:
         if key_for(t["media_type"], t["id"]) == k:
             return [(chat_id, f'Already tracking {_link(mt, tmdb_id, t["title"])}.', "HTML")]
-    titles_data["titles"].append(
-        {"id": tmdb_id, "media_type": mt, "title": title, "added_by": chat_id}
-    )
+    lst.append({"id": tmdb_id, "media_type": mt, "title": title})
     what = "new seasons" if mt == "tv" else "sequels"
     kind = "show" if mt == "tv" else "movie"
     return [
@@ -208,7 +207,7 @@ def _do_add(mt, tmdb_id, title, chat_id, titles_data):
 # -------------------------------------------------------------------- remove
 
 def _cmd_remove(args, chat_id, titles_data):
-    lst = titles_data["titles"]
+    lst = user_titles(titles_data, chat_id)
     if len(args) == 1 and args[0].isdigit():
         idx = int(args[0]) - 1
         if 0 <= idx < len(lst):
@@ -239,8 +238,8 @@ def _cmd_remove(args, chat_id, titles_data):
 
 # ---------------------------------------------------------------------- list
 
-def _format_list(titles_data):
-    lst = titles_data["titles"]
+def _format_list(titles_data, chat_id):
+    lst = user_titles(titles_data, chat_id)
     if not lst:
         return "You are not tracking anything yet. Use /add &lt;name&gt;."
     lines = ["You are tracking:"]

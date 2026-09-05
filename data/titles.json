@@ -1,34 +1,33 @@
 {
-  "titles": [
-    {
-      "added_by": 5179879702,
-      "id": 125988,
-      "media_type": "tv",
-      "title": "Silo"
-    },
-    {
-      "added_by": 5179879702,
-      "id": 136311,
-      "media_type": "tv",
-      "title": "Shrinking"
-    },
-    {
-      "added_by": 5179879702,
-      "id": 97546,
-      "media_type": "tv",
-      "title": "Ted Lasso"
-    },
-    {
-      "added_by": 5179879702,
-      "id": 84773,
-      "media_type": "tv",
-      "title": "The Lord of the Rings: The Rings of Power"
-    },
-    {
-      "added_by": 5179879702,
-      "id": 82856,
-      "media_type": "tv",
-      "title": "The Mandalorian"
+  "users": {
+    "5179879702": {
+      "titles": [
+        {
+          "id": 125988,
+          "media_type": "tv",
+          "title": "Silo"
+        },
+        {
+          "id": 136311,
+          "media_type": "tv",
+          "title": "Shrinking"
+        },
+        {
+          "id": 97546,
+          "media_type": "tv",
+          "title": "Ted Lasso"
+        },
+        {
+          "id": 84773,
+          "media_type": "tv",
+          "title": "The Lord of the Rings: The Rings of Power"
+        },
+        {
+          "id": 82856,
+          "media_type": "tv",
+          "title": "The Mandalorian"
+        }
+      ]
     }
-  ]
+  }
 }

@@ -84,7 +84,7 @@ pending_updates = [
 ]
 run.main([])
 check("welcome + add confirmation sent", len(sent) == 2 and "Now tracking" in sent[1][1])
-check("title written to titles.json", load("titles.json")["titles"][0]["id"] == 1399)
+check("title written to titles.json", load("titles.json")["users"]["777"]["titles"][0]["id"] == 1399)
 check("baseline stored, no alert", "tv:1399" in load("state.json")["titles"])
 check("no false 'new season' alert on first sight",
       not any("New season" in t for _, t in sent))
@@ -117,7 +117,7 @@ os.environ["TELEGRAM_UPDATE_JSON"] = json.dumps(
 )
 run.main(["--no-check"])
 check("webhook: /remove handled without getUpdates", "Stopped tracking" in sent[-1][1])
-check("webhook: title removed", load("titles.json")["titles"] == [])
+check("webhook: title removed", load("titles.json")["users"]["777"]["titles"] == [])
 check("webhook: update_id remembered", 5001 in load("state.json")["recent_update_ids"])
 
 print("Run 5: webhook mode - Telegram retries the same update")
@@ -189,8 +189,37 @@ os.environ["TELEGRAM_UPDATE_JSON"] = json.dumps(
 run.main(["--no-check"])
 check("stranger told it's invite-only", sent and "invite-only" in sent[0][1])
 check("stranger not subscribed", 5555 not in load("state.json")["subscribers"])
+
+print("Run 12: the new user (4242) tracks a different show than the admin")
+sent.clear()
+TV[9999] = {
+    "name": "Foo Show", "status": "Returning Series", "number_of_seasons": 1,
+    "seasons": [{"season_number": 1, "air_date": "2020-01-01"}],
+    "last_episode_to_air": None, "next_episode_to_air": None,
+}
+os.environ["TELEGRAM_UPDATE_JSON"] = json.dumps(
+    {"update_id": 9004, "message": {"text": "/add tv 9999", "chat": {"id": 4242}}}
+)
+run.main([])  # runs the check too, so 9999 gets its TMDB baseline right away
+check("4242's own list has Foo Show", any(
+    t["id"] == 9999 for t in load("titles.json")["users"]["4242"]["titles"]
+))
+check("777's list is unaffected", all(
+    t["id"] != 9999 for t in load("titles.json")["users"]["777"]["titles"]
+))
+
+print("Run 13: Foo Show gets a new season - only 4242 hears about it, not 777")
+sent.clear()
+del os.environ["TELEGRAM_UPDATE_JSON"]  # webhook idle: no telegram commands this run
+TV[9999] = dict(
+    TV[9999], number_of_seasons=2,
+    seasons=TV[9999]["seasons"] + [{"season_number": 2, "air_date": None}],
+)
+run.main([])
+check("exactly one alert sent", len(sent) == 1)
+check("alert went to 4242, not 777", sent[0][0] == 4242)
+check("alert is about Foo Show", "Foo Show" in sent[0][1])
 del os.environ["TELEGRAM_WEBHOOK_MODE"]
-del os.environ["TELEGRAM_UPDATE_JSON"]
 
 print(f"\n{'FAILED' if fails else 'PASSED'} ({fails} failing)")
 sys.exit(1 if fails else 0)

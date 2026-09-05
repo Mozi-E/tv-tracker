@@ -137,9 +137,22 @@ def test_movie_snapshot_and_diff():
 def test_store_roundtrip():
     print("Store round-trip")
     titles = store.load_titles()
-    titles["titles"].append({"id": 1399, "media_type": "tv", "title": "GoT", "added_by": 1})
+    store.user_titles(titles, 1).append({"id": 1399, "media_type": "tv", "title": "GoT"})
     store.save_titles(titles)
-    check("titles persisted", store.load_titles()["titles"][0]["id"] == 1399)
+    check("titles persisted", store.load_titles()["users"]["1"]["titles"][0]["id"] == 1399)
+
+    old_flat = {"titles": [{"id": 603, "media_type": "movie", "title": "The Matrix", "added_by": 42}]}
+    store.save_titles(old_flat)
+    migrated = store.load_titles()
+    check("old flat format migrates to per-user",
+          migrated["users"]["42"]["titles"] == [{"id": 603, "media_type": "movie", "title": "The Matrix"}])
+
+    by_key, owners = store.all_titles_by_key({"users": {
+        "1": {"titles": [{"id": 1399, "media_type": "tv", "title": "GoT"}]},
+        "2": {"titles": [{"id": 1399, "media_type": "tv", "title": "GoT"}]},
+    }})
+    check("shared title deduped to one entry", list(by_key) == ["tv:1399"])
+    check("both owners recorded", sorted(owners["tv:1399"]) == [1, 2])
 
     st = store.load_state()
     st["telegram_offset"] = 42
@@ -148,8 +161,8 @@ def test_store_roundtrip():
     reloaded = store.load_state()
     check("state persisted", reloaded["telegram_offset"] == 42 and 555 in reloaded["subscribers"])
     # reset for the command tests below
-    store.save_titles({"titles": []})
-    store.save_state({"telegram_offset": 0, "subscribers": [], "titles": {}})
+    store.save_titles({"users": {}})
+    store.save_state({"telegram_offset": 0, "subscribers": [], "admins": [], "titles": {}})
 
 
 # --------------------------------------------------------- command handler
@@ -163,9 +176,10 @@ def _fresh_state():
 
 def test_commands():
     print("Telegram command handler")
-    titles = {"titles": []}
+    titles = {"users": {}}
     state = _fresh_state()
     invites = {"invites": {}}
+    my_titles = lambda: store.user_titles(titles, 555)
 
     r = commands.handle_update(_update("/help"), titles, state, invites)
     check("first-ever message bootstraps sender as admin", r and "first user" in r[0][1])
@@ -183,7 +197,7 @@ def test_commands():
         {"id": 603, "media_type": "movie", "title": "The Matrix", "year": "1999", "popularity": 90}
     ]
     r = commands.handle_update(_update("/add the matrix"), titles, state, invites)
-    check("/add single match adds it", any(t["id"] == 603 for t in titles["titles"]))
+    check("/add single match adds it", any(t["id"] == 603 for t in my_titles()))
     check("/add confirms", "Now tracking" in r[0][1])
 
     r = commands.handle_update(_update("/add the matrix"), titles, state, invites)
@@ -196,12 +210,12 @@ def test_commands():
     ]
     r = commands.handle_update(_update("/add dune"), titles, state, invites)
     check("/add multi -> choices listed", "/add movie 2" in r[0][1] and "/add tv 1" in r[0][1])
-    check("/add multi -> nothing added yet", all(t["id"] not in (1, 2) for t in titles["titles"]))
+    check("/add multi -> nothing added yet", all(t["id"] not in (1, 2) for t in my_titles()))
 
     # explicit id form
     tmdb.tv_details = lambda i: {"name": "Dune: Prophecy", "seasons": [], "status": "Returning Series", "number_of_seasons": 1}
     r = commands.handle_update(_update("/add tv 1"), titles, state, invites)
-    check("/add tv <id> adds it", any(t["id"] == 1 and t["media_type"] == "tv" for t in titles["titles"]))
+    check("/add tv <id> adds it", any(t["id"] == 1 and t["media_type"] == "tv" for t in my_titles()))
 
     r = commands.handle_update(_update("/list"), titles, state, invites)
     check("/list shows two items", r[0][1].count("/remove") == 2)
@@ -209,7 +223,7 @@ def test_commands():
           '<a href="https://www.themoviedb.org/' in r[0][1] and r[0][2] == "HTML")
 
     r = commands.handle_update(_update("/remove 1"), titles, state, invites)
-    check("/remove by number works", len(titles["titles"]) == 1 and "Stopped tracking" in r[0][1])
+    check("/remove by number works", len(my_titles()) == 1 and "Stopped tracking" in r[0][1])
 
     r = commands.handle_update(_update("/remove 9"), titles, state, invites)
     check("/remove out of range handled", "no item #9" in r[0][1])
@@ -220,7 +234,7 @@ def test_commands():
 
 def test_invites():
     print("Invite links")
-    titles = {"titles": []}
+    titles = {"users": {}}
     state = _fresh_state()
     invites = {"invites": {}}
 
@@ -277,7 +291,7 @@ def test_url_parsing_and_add():
     check("non-tmdb url -> None", tmdb.parse_tmdb_url("https://example.com/tv/1") is None)
     check("plain text -> None", tmdb.parse_tmdb_url("game of thrones") is None)
 
-    titles = {"titles": []}
+    titles = {"users": {}}
     state = _fresh_state()
     state["subscribers"] = [555]  # pre-approved, so /add isn't swallowed by bootstrap
     state["admins"] = [555]
@@ -288,8 +302,8 @@ def test_url_parsing_and_add():
         _update("/add https://www.themoviedb.org/tv/1399-game-of-thrones"), titles, state, invites
     )
     check("/add <url> tracks the right id",
-          titles["titles"] == [{"id": 1399, "media_type": "tv",
-                                "title": "Game of Thrones", "added_by": 555}])
+          store.user_titles(titles, 555) == [{"id": 1399, "media_type": "tv",
+                                              "title": "Game of Thrones"}])
     check("/add <url> confirmation links to TMDB",
           '<a href="https://www.themoviedb.org/tv/1399"' in r[0][1] and r[0][2] == "HTML")
 

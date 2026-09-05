@@ -7,10 +7,13 @@ and sends a Telegram message when:
 - a **new episode** of a tracked show airs (on/around its air date), or
 - a **sequel / related film** appears in a tracked movie's franchise (TMDB "collection").
 
-You manage the watch-list entirely from Telegram (`/add`, `/list`, `/remove`).
-A GitHub Actions workflow runs once a day: it reads your Telegram commands,
-checks TMDB, messages you about anything new, and commits the updated state
-back to this repo.
+Each Telegram user who's been let in (see [Access control](#access-control))
+gets **their own watch-list**, managed with `/add`, `/list`, `/remove`.
+Two people tracking the same show only cost one TMDB check - the check is
+shared, but each person only hears about the titles on their own list. A
+GitHub Actions workflow runs once a day: it reads Telegram commands, checks
+TMDB, messages the right people about anything new, and commits the updated
+state back to this repo.
 
 ```
 tvtracker/        the package
@@ -18,11 +21,12 @@ tvtracker/        the package
   tmdb.py         tiny TMDB v3 client
   telegram.py     tiny Telegram Bot API client
   diff.py         pure logic: TMDB payload -> snapshot -> list of changes
-  commands.py     the /add /list /remove chat interface
+  commands.py     the /add /list /remove /invite chat interface
   run.py          orchestration (process commands, then run checks)
 check.py          entry point  ->  python check.py
-data/titles.json  your watch-list (managed over Telegram)
-data/state.json   last-seen snapshot per title + Telegram bookkeeping
+data/titles.json  one watch-list per user (managed over Telegram)
+data/state.json   last-seen snapshot per title (shared) + bot bookkeeping
+data/invites.json share-link tokens created with /invite
 .github/workflows/check.yml   the daily job
 selftest.py       offline unit tests (no network, no deps)
 itest.py          offline end-to-end test of a full daily cycle
@@ -58,14 +62,17 @@ Add:
 |----------------------|-----------------------------------------|----------|
 | `TMDB_API_KEY`       | your TMDB v3 API key                     | yes      |
 | `TELEGRAM_BOT_TOKEN` | the BotFather token                      | yes      |
-| `TELEGRAM_CHAT_ID`   | a chat id to always notify (optional)    | no       |
+| `TELEGRAM_CHAT_ID`   | a chat id CC'd on *every* alert (optional) | no     |
 
-Secrets are only ever read from the environment (`tvtracker/config.py`); they
-are never written to `data/` or committed.
+`TELEGRAM_CHAT_ID` is an always-CC address, not an access-control mechanism -
+it gets a copy of every user's alerts and maintenance reminders regardless of
+whose title it is. Leave it unset unless you specifically want one place that
+sees everything. Secrets are only ever read from the environment
+(`tvtracker/config.py`); they are never written to `data/` or committed.
 
-> This repo is public, so `data/state.json` (which can contain the numeric
-> chat ids of people who messaged the bot) is public too. If that matters to
-> you, make the repo private and/or rely only on the `TELEGRAM_CHAT_ID` secret.
+> This repo is public, so `data/state.json` and `data/titles.json` (which can
+> contain the numeric chat ids of everyone who's been let in, and what each of
+> them tracks) are public too. If that matters to you, make the repo private.
 
 ## 4. Run it
 
@@ -112,8 +119,9 @@ default a link is good for 1 use and expires in 7 days -
 Access is enforced by the bot itself (`tvtracker/commands.py`: `admins` /
 `subscribers` / invite tokens in `data/state.json` and `data/invites.json`),
 not by the Cloudflare Worker - the Worker forwards every message it receives
-and lets the bot decide. Everyone who's in shares one watch-list and gets
-every alert (see [Notes and limitations](#notes-and-limitations)).
+and lets the bot decide. Being let in only grants your own watch-list and your
+own alerts - it doesn't expose anyone else's titles, and `/invite` is
+admin-only so an ordinary user can't grant further access themselves.
 
 ## Local development
 
