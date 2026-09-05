@@ -100,11 +100,29 @@ check.
 /add movie 603                                   track by exact TMDB id
 /list                                            show everything you track
 /remove 2                                        stop tracking item #2 from /list
+/where 2                                         where to watch item #2 in Israel
+/where The Bear                                  same, by name/link/id instead of a list number
 /invite [uses] [days]                            (admin) share-link, default 1 use / 7 days
 /help                                            command reference
 ```
 
 Replies and alerts link each title straight to its TMDB page.
+
+### Adding a show that already has an unreleased season
+
+If a season is already announced (or has a future air date) at the moment you
+`/add` a show, the confirmation says so right away instead of waiting for the
+next daily check to notice it - e.g. `Note: Season 3 is already announced -
+premieres 2027-03-01.` The same applies to movies already in a franchise
+collection with an unreleased entry. This is a one-time note at add time, not
+a repeat of the change alerts described above.
+
+### Where to watch (Israel)
+
+`/where <number>` (or a name/link/id, same forms as `/add`) looks up
+JustWatch's Israel availability via TMDB and replies with subscription /
+free / rent / buy options and a link to the full listing. Coverage depends on
+what JustWatch has for that title - not everything has Israeli data.
 
 ### Access control
 

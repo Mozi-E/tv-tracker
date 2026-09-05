@@ -308,6 +308,96 @@ def test_url_parsing_and_add():
           '<a href="https://www.themoviedb.org/tv/1399"' in r[0][1] and r[0][2] == "HTML")
 
 
+def test_pending_announcement_note():
+    print("Already-announced note on /add")
+    titles = {"users": {}}
+    state = _fresh_state()
+    state["subscribers"] = [555]
+    state["admins"] = [555]
+    invites = {"invites": {}}
+
+    # TV: season 2 already announced, no date yet
+    tmdb.tv_details = lambda i: {
+        "name": "Some Show", "status": "Returning Series", "number_of_seasons": 2,
+        "seasons": [
+            {"season_number": 1, "air_date": "2020-01-01"},
+            {"season_number": 2, "air_date": None},
+        ],
+    }
+    r = commands.handle_update(_update("/add tv 1", chat_id=555), titles, state, invites)
+    check("tv: pending season noted", "Season 2 is already announced" in r[0][1])
+    check("tv: no air date phrased correctly", "no air date yet" in r[0][1])
+
+    # TV: nothing pending -> no note
+    tmdb.tv_details = lambda i: {
+        "name": "Finished Show", "status": "Ended", "number_of_seasons": 1,
+        "seasons": [{"season_number": 1, "air_date": "2020-01-01"}],
+    }
+    r = commands.handle_update(_update("/add tv 2", chat_id=555), titles, state, invites)
+    check("tv: nothing pending -> no note", "already announced" not in r[0][1])
+
+    # Movie: an unreleased sequel already exists in the same collection
+    tmdb.movie_details = lambda i: {
+        "title": "Some Movie", "belongs_to_collection": {"id": 42, "name": "Some Collection"}
+    }
+    tmdb.collection_details = lambda i: {"parts": [
+        {"id": 1, "title": "Some Movie", "release_date": "2020-01-01"},
+        {"id": 2, "title": "Some Movie Returns", "release_date": "2099-06-01"},
+    ]}
+    r = commands.handle_update(_update("/add movie 1", chat_id=555), titles, state, invites)
+    check("movie: pending sequel noted",
+          "Some Movie Returns" in r[0][1] and "2099-06-01" in r[0][1])
+
+    # Movie: no collection -> no note, no crash
+    tmdb.movie_details = lambda i: {"title": "Standalone Movie"}
+    r = commands.handle_update(_update("/add movie 3", chat_id=555), titles, state, invites)
+    check("movie: no collection -> no note", "already announced" not in r[0][1])
+
+
+def test_where_to_watch():
+    print("/where (Israel streaming availability)")
+    titles = {"users": {}}
+    state = _fresh_state()
+    state["subscribers"] = [555]
+    state["admins"] = [555]
+    invites = {"invites": {}}
+
+    r = commands.handle_update(_update("/where"), titles, state, invites)
+    check("/where with no args shows usage", "Usage" in r[0][1])
+
+    r = commands.handle_update(_update("/where 1"), titles, state, invites)
+    check("/where <number> out of range", "no item #1" in r[0][1] or "There is no item" in r[0][1])
+
+    tmdb.tv_details = lambda i: {"name": "Some Show", "seasons": [], "number_of_seasons": 0, "status": "Ended"}
+    commands.handle_update(_update("/add tv 555"), titles, state, invites)
+
+    tmdb.watch_providers = lambda mt, i: {"results": {"IL": {
+        "link": "https://www.themoviedb.org/tv/555/watch?locale=IL",
+        "flatrate": [{"provider_name": "Netflix"}, {"provider_name": "HBO Max"}],
+        "rent": [{"provider_name": "Apple TV"}],
+    }}}
+    r = commands.handle_update(_update("/where 1"), titles, state, invites)
+    check("/where <number> shows subscription providers", "Netflix" in r[0][1] and "HBO Max" in r[0][1])
+    check("/where <number> shows rent providers", "Apple TV" in r[0][1])
+    check("/where <number> links to TMDB", "watch?locale=IL" in r[0][1] and r[0][2] == "HTML")
+
+    tmdb.watch_providers = lambda mt, i: {"results": {}}
+    r = commands.handle_update(_update("/where 1"), titles, state, invites)
+    check("/where <number> with no IL data", "No Israeli streaming info" in r[0][1])
+
+    tmdb.watch_providers = lambda mt, i: {"results": {"IL": {
+        "flatrate": [{"provider_name": "Netflix"}]
+    }}}
+    r = commands.handle_update(_update("/where tv 555"), titles, state, invites)
+    check("/where tv <id> explicit form works", "Netflix" in r[0][1])
+
+    tmdb.search = lambda q, limit=5: [
+        {"id": 555, "media_type": "tv", "title": "Some Show", "year": "2020", "popularity": 90}
+    ]
+    r = commands.handle_update(_update("/where some show"), titles, state, invites)
+    check("/where <name> resolves via search", "Netflix" in r[0][1])
+
+
 def test_maintenance():
     print("Maintenance reminders")
 
@@ -355,6 +445,8 @@ if __name__ == "__main__":
     test_commands()
     test_invites()
     test_url_parsing_and_add()
+    test_pending_announcement_note()
+    test_where_to_watch()
     test_maintenance()
     print(f"\n{PASS} passed, {FAIL} failed")
     sys.exit(1 if FAIL else 0)

@@ -11,6 +11,7 @@ import secrets as _secrets
 from datetime import date, timedelta
 
 from . import tmdb, telegram
+from .diff import movie_snapshot, tv_snapshot
 from .store import key_for, user_titles
 
 HELP = (
@@ -22,6 +23,8 @@ HELP = (
     "/add movie &lt;id&gt;    - track a movie by its exact TMDB id\n"
     "/list              - show everything you track\n"
     "/remove &lt;number&gt;   - stop tracking item &lt;number&gt; from /list\n"
+    "/where &lt;number&gt;    - where to watch it in Israel\n"
+    "/where &lt;name&gt;      - same, by name/link/id instead of list number\n"
     "/help              - show this message\n"
     "/invite [uses] [days] - (admin only) create a share link, default 1 use / 7 days\n"
     "\n"
@@ -76,6 +79,8 @@ def handle_update(update: dict, titles_data: dict, state: dict, invites: dict):
         return _cmd_add(args, chat_id, titles_data)
     if cmd == "/remove":
         return _cmd_remove(args, chat_id, titles_data)
+    if cmd == "/where":
+        return _cmd_where(args, chat_id, titles_data)
     if cmd == "/invite":
         return _cmd_invite(args, chat_id, state, invites)
     return [(chat_id, f"Unknown command {cmd}. Try /help.")]
@@ -182,10 +187,45 @@ def _add_by_id(mt, tmdb_id, chat_id, titles_data):
     except tmdb.TMDBError as e:
         return [(chat_id, f"Could not fetch {mt} {tmdb_id}: {e}")]
     title = details.get("name") or details.get("title") or f"{mt} {tmdb_id}"
-    return _do_add(mt, tmdb_id, title, chat_id, titles_data)
+    return _do_add(mt, tmdb_id, title, chat_id, titles_data, details=details)
 
 
-def _do_add(mt, tmdb_id, title, chat_id, titles_data):
+def _pending_tv_note(snap: dict):
+    """A season that's already announced/dated but hasn't aired yet, if any."""
+    today = date.today().isoformat()
+    pending = [
+        (int(num), air_date)
+        for num, air_date in snap.get("seasons", {}).items()
+        if not air_date or air_date > today
+    ]
+    if not pending:
+        return None
+    num, air_date = max(pending)  # the furthest-along season not yet out
+    if air_date:
+        return f"Note: Season {num} is already announced - premieres {air_date}."
+    return f"Note: Season {num} is already announced (no air date yet)."
+
+
+def _pending_movie_note(snap: dict, tmdb_id):
+    """A franchise entry that's already announced/dated but not released yet."""
+    today = date.today().isoformat()
+    pending = []
+    for pid, info in snap.get("parts", {}).items():
+        if int(pid) == tmdb_id:
+            continue
+        rd = info.get("release_date")
+        if not rd or rd > today:
+            pending.append((rd, info.get("title") or "Untitled"))
+    if not pending:
+        return None
+    dated = sorted((p for p in pending if p[0]), key=lambda p: p[0])
+    rd, title = dated[0] if dated else pending[0]
+    if rd:
+        return f'Note: "{html.escape(title)}" is already announced - releases {rd}.'
+    return f'Note: "{html.escape(title)}" is already announced (no release date yet).'
+
+
+def _do_add(mt, tmdb_id, title, chat_id, titles_data, details=None):
     lst = user_titles(titles_data, chat_id)
     k = key_for(mt, tmdb_id)
     for t in lst:
@@ -194,14 +234,36 @@ def _do_add(mt, tmdb_id, title, chat_id, titles_data):
     lst.append({"id": tmdb_id, "media_type": mt, "title": title})
     what = "new seasons" if mt == "tv" else "sequels"
     kind = "show" if mt == "tv" else "movie"
-    return [
-        (
-            chat_id,
-            f"Now tracking the {kind} {_link(mt, tmdb_id, title)}. "
-            f"I will alert you about {what}.",
-            "HTML",
-        )
-    ]
+    msg = (
+        f"Now tracking the {kind} {_link(mt, tmdb_id, title)}. "
+        f"I will alert you about {what}."
+    )
+
+    # Best-effort "already announced" note. This is a nice-to-have on top of
+    # a successful add, so any failure here (network, unexpected shape) must
+    # never break the confirmation itself.
+    if details is None:
+        try:
+            details = tmdb.tv_details(tmdb_id) if mt == "tv" else tmdb.movie_details(tmdb_id)
+        except Exception:
+            details = None
+
+    note = None
+    if details:
+        try:
+            if mt == "tv":
+                note = _pending_tv_note(tv_snapshot(details))
+            else:
+                coll = details.get("belongs_to_collection")
+                if coll:
+                    cd = tmdb.collection_details(coll["id"])
+                    note = _pending_movie_note(movie_snapshot(details, cd), tmdb_id)
+        except Exception:
+            note = None
+    if note:
+        msg += "\n" + note
+
+    return [(chat_id, msg, "HTML")]
 
 
 # -------------------------------------------------------------------- remove
@@ -234,6 +296,91 @@ def _cmd_remove(args, chat_id, titles_data):
                 ]
         return [(chat_id, "That title is not in your list.")]
     return [(chat_id, "Usage: /remove <number from /list>")]
+
+
+# ----------------------------------------------------------------- where
+
+_PROVIDER_KINDS = [
+    ("flatrate", "Subscription"),
+    ("free", "Free"),
+    ("ads", "Free with ads"),
+    ("rent", "Rent"),
+    ("buy", "Buy"),
+]
+
+
+def _format_providers(mt, tmdb_id, title, data):
+    il = (data.get("results") or {}).get("IL") or {}
+    lines = []
+    for key, label in _PROVIDER_KINDS:
+        providers = il.get(key)
+        if providers:
+            names = ", ".join(html.escape(p["provider_name"]) for p in providers)
+            lines.append(f"- {label}: {names}")
+
+    header = f"Where to watch {_link(mt, tmdb_id, title)} in Israel:"
+    if not lines:
+        return (
+            f"No Israeli streaming info on TMDB for {_link(mt, tmdb_id, title)} yet "
+            "(JustWatch coverage varies by title)."
+        )
+    body = header + "\n" + "\n".join(lines)
+    if il.get("link"):
+        body += f'\n<a href="{il["link"]}">Full details on TMDB</a>'
+    return body
+
+
+def _cmd_where(args, chat_id, titles_data):
+    if not args:
+        return [(chat_id, "Usage: /where <number from /list>   (or a name, a TMDB link, or /where tv <id>)")]
+
+    if len(args) == 1 and args[0].isdigit():
+        lst = user_titles(titles_data, chat_id)
+        idx = int(args[0]) - 1
+        if 0 <= idx < len(lst):
+            t = lst[idx]
+            return _where_by_id(t["media_type"], t["id"], t["title"], chat_id)
+        return [(chat_id, f"There is no item #{args[0]}. Check /list.")]
+
+    parsed = tmdb.parse_tmdb_url(" ".join(args))
+    if parsed:
+        return _where_by_id(parsed[0], parsed[1], None, chat_id)
+
+    if len(args) >= 2 and args[0].lower() in ("tv", "movie") and args[1].isdigit():
+        return _where_by_id(args[0].lower(), int(args[1]), None, chat_id)
+
+    query = " ".join(args)
+    try:
+        results = tmdb.search(query, limit=5)
+    except tmdb.TMDBError as e:
+        return [(chat_id, f"Search failed: {e}")]
+    if not results:
+        return [(chat_id, f'Nothing found for "{query}".')]
+    if len(results) == 1:
+        r = results[0]
+        return _where_by_id(r["media_type"], r["id"], r["title"], chat_id)
+
+    lines = [f'Several matches for "{html.escape(query)}" - reply with one of these:']
+    for r in results:
+        lines.append(
+            f"- {_link(r['media_type'], r['id'], r['title'])} "
+            f"({r['year'] or '--'}) [{r['media_type']}]   ->   /where {r['media_type']} {r['id']}"
+        )
+    return [(chat_id, "\n".join(lines), "HTML")]
+
+
+def _where_by_id(mt, tmdb_id, title, chat_id):
+    if title is None:
+        try:
+            details = tmdb.tv_details(tmdb_id) if mt == "tv" else tmdb.movie_details(tmdb_id)
+        except tmdb.TMDBError as e:
+            return [(chat_id, f"Could not fetch {mt} {tmdb_id}: {e}")]
+        title = details.get("name") or details.get("title") or f"{mt} {tmdb_id}"
+    try:
+        data = tmdb.watch_providers(mt, tmdb_id)
+    except tmdb.TMDBError as e:
+        return [(chat_id, f"Could not fetch streaming info: {e}")]
+    return [(chat_id, _format_providers(mt, tmdb_id, title, data), "HTML")]
 
 
 # ---------------------------------------------------------------------- list

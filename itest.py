@@ -219,6 +219,20 @@ run.main([])
 check("exactly one alert sent", len(sent) == 1)
 check("alert went to 4242, not 777", sent[0][0] == 4242)
 check("alert is about Foo Show", "Foo Show" in sent[0][1])
+
+print("Run 14: /where wired end to end over webhook")
+sent.clear()
+tmdb.watch_providers = lambda mt, i: {"results": {"IL": {
+    "link": "https://www.themoviedb.org/tv/1399/watch?locale=IL",
+    "flatrate": [{"provider_name": "HBO Max"}],
+}}}
+os.environ["TELEGRAM_UPDATE_JSON"] = json.dumps(
+    {"update_id": 9005, "message": {"text": "/where 1", "chat": {"id": 777}}}
+)
+run.main(["--no-check"])
+check("/where reply reaches the right user", sent and sent[0][0] == 777)
+check("/where reply names the provider", "HBO Max" in sent[0][1])
+del os.environ["TELEGRAM_UPDATE_JSON"]
 del os.environ["TELEGRAM_WEBHOOK_MODE"]
 
 print(f"\n{'FAILED' if fails else 'PASSED'} ({fails} failing)")

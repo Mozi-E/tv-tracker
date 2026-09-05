@@ -77,3 +77,8 @@ def movie_details(movie_id: int):
 
 def collection_details(collection_id: int):
     return _get(f"/collection/{collection_id}")
+
+
+def watch_providers(media_type: str, tmdb_id) -> dict:
+    """JustWatch-sourced availability, keyed by country in `results`."""
+    return _get(f"/{media_type}/{tmdb_id}/watch/providers")
