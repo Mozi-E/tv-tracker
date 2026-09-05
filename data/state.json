@@ -18,7 +18,8 @@
     182911148,
     182911149,
     182911150,
-    3
+    3,
+    182911151
   ],
   "subscribers": [
     5179879702
@@ -112,6 +113,26 @@
         "1": "2022-08-31",
         "2": "2024-08-29",
         "3": "2026-11-10"
+      },
+      "status": "Returning Series"
+    },
+    "tv:95396": {
+      "kind": "tv",
+      "last_episode": {
+        "air_date": "2025-03-20",
+        "key": "S02E10",
+        "name": "Cold Harbor"
+      },
+      "name": "Severance",
+      "next_episode": null,
+      "notified_episodes": [
+        "S02E10"
+      ],
+      "number_of_seasons": 3,
+      "seasons": {
+        "1": "2022-02-17",
+        "2": "2025-01-16",
+        "3": null
       },
       "status": "Returning Series"
     },
