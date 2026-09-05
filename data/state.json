@@ -11,7 +11,8 @@
     182911145,
     182911146,
     182911147,
-    182911148
+    182911148,
+    182911149
   ],
   "subscribers": [
     5179879702
@@ -63,6 +64,26 @@
         "3": "2026-01-27"
       },
       "status": "Returning Series"
+    },
+    "tv:82856": {
+      "kind": "tv",
+      "last_episode": {
+        "air_date": "2023-04-19",
+        "key": "S03E08",
+        "name": "Chapter 24: The Return"
+      },
+      "name": "The Mandalorian",
+      "next_episode": null,
+      "notified_episodes": [
+        "S03E08"
+      ],
+      "number_of_seasons": 3,
+      "seasons": {
+        "1": "2019-11-12",
+        "2": "2020-10-30",
+        "3": "2023-03-01"
+      },
+      "status": "Ended"
     },
     "tv:84773": {
       "kind": "tv",
