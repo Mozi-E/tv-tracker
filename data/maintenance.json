@@ -4,7 +4,7 @@
       "due": "2027-09-01",
       "due_seen": "2027-09-01",
       "id": "rotate-secrets",
-      "notes": "Once a year: @BotFather /revoke -> update TELEGRAM_BOT_TOKEN in GitHub Secrets. New `openssl rand -hex 32` -> update TELEGRAM_SECRET_TOKEN in Cloudflare AND re-run setWebhook with it. Then bump this date +1 year and commit.",
+      "notes": "Full step-by-step in MAINTENANCE.md section 'Annual secret rotation'. Short version: @BotFather /revoke -> update TELEGRAM_BOT_TOKEN in GitHub Secrets -> setWebhook with the new bot token. New `openssl rand -hex 32` -> update TELEGRAM_SECRET_TOKEN in Cloudflare -> setWebhook again with the new secret. Verify with the curl check in webhook/README.md before trusting it. Then bump this date +1 year and commit.",
       "notified": [],
       "title": "Annual rotation: bot token + webhook secret"
     }

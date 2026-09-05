@@ -67,14 +67,47 @@ Cloudflare.
 
 ### 1. Annual secret rotation  (`rotate-secrets`)
 
-Optional hygiene, once a year:
+Optional hygiene, once a year. Two independent secrets, do both:
 
-- `@BotFather` -> `/revoke` -> update `TELEGRAM_BOT_TOKEN` in
-  <https://github.com/Mozi-E/tv-tracker/settings/secrets/actions>.
-- New shared secret: `openssl rand -hex 32` -> update `TELEGRAM_SECRET_TOKEN`
-  in Cloudflare **and** re-run `setWebhook` with the new value
-  (see [`webhook/README.md`](webhook/README.md) step 4).
-- Bump this task's `due` +1 year.
+**a. Bot token**
+
+1. Telegram -> `@BotFather` -> `/revoke` -> pick this bot -> copy the new token.
+2. GitHub: <https://github.com/Mozi-E/tv-tracker/settings/secrets/actions> ->
+   edit `TELEGRAM_BOT_TOKEN` -> paste the new token.
+3. Re-point the webhook at the new token (the secret_token stays the same -
+   only the bot token in the URL changes):
+   ```bash
+   SECRET=$(cat ~/tvt_secret.txt)
+   BOT_TOKEN='<new token from BotFather>'
+   curl "https://api.telegram.org/bot${BOT_TOKEN}/setWebhook" -d "url=https://tv-tracker-webhook.eliormozess.workers.dev" -d "secret_token=$SECRET" -d 'allowed_updates=["message"]'
+   ```
+
+**b. Webhook secret**
+
+1. Generate a new one and overwrite the local copy:
+   ```bash
+   openssl rand -hex 32 | tr -d '\n' > ~/tvt_secret.txt
+   cat ~/tvt_secret.txt; echo
+   ```
+2. Cloudflare -> the Worker -> **Settings -> Variables and Secrets** -> edit
+   `TELEGRAM_SECRET_TOKEN` -> paste the new value -> **Save** (redeploys).
+3. Point Telegram at the same new value (use the *current* bot token here):
+   ```bash
+   SECRET=$(cat ~/tvt_secret.txt)
+   BOT_TOKEN='<current bot token>'
+   curl "https://api.telegram.org/bot${BOT_TOKEN}/setWebhook" -d "url=https://tv-tracker-webhook.eliormozess.workers.dev" -d "secret_token=$SECRET" -d 'allowed_updates=["message"]'
+   ```
+4. Verify end to end, without touching Telegram, before trusting it:
+   ```bash
+   curl -i -X POST "https://tv-tracker-webhook.eliormozess.workers.dev" -H "X-Telegram-Bot-Api-Secret-Token: $SECRET" -H "Content-Type: application/json" --data '{"update_id":1,"message":{"text":"/list","chat":{"id":5179879702},"from":{"id":5179879702}}}'
+   ```
+   Expect `200 dispatched`. See [`webhook/README.md`](webhook/README.md#verifying-the-github-app-auth-directly)
+   for what other status codes mean.
+
+**c. Close out**
+
+Bump this task's (`rotate-secrets`) `due` in `data/maintenance.json` +1 year
+and commit.
 
 ## Not scheduled - handle when prompted
 
