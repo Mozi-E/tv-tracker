@@ -45,30 +45,27 @@ d=store.load_maintenance(); print(maintenance.scan(d['tasks'], date(2026,11,25))
 
 ## The tasks
 
-### 1. Renew the GitHub PAT in the Cloudflare Worker  (`cloudflare-pat`)
+### GitHub App auth for the Worker - not a dated task
 
-**The only thing scheduled to break.** The Worker calls the GitHub API with a
-fine-grained Personal Access Token (`GH_TOKEN`). If you gave it an expiry, on
-that day:
+The Cloudflare Worker authenticates to GitHub as a **GitHub App**
+([`webhook/README.md`](webhook/README.md) step 1), not a fine-grained PAT. It
+signs a short-lived JWT with the App's private key and exchanges it for a
+~1-hour installation token on every request. The private key **does not
+expire**, so there is nothing here on a calendar - no `data/maintenance.json`
+entry for it.
 
-- `/add`, `/list`, `/remove` stop being instant - the Worker gets HTTP 401 from
-  GitHub and Telegram messages are no longer forwarded.
-- The **daily TMDB check still works** (it doesn't use the Worker).
+The only reason to touch it: the key is compromised. Then, incident-driven,
+not scheduled: **GitHub -> Settings -> Developer settings -> GitHub Apps ->
+(your app) -> Private keys -> Delete**, generate a new one, convert it to
+PKCS#8 (`webhook/README.md` step 1), update `GH_APP_PRIVATE_KEY` in
+Cloudflare.
 
-Fix (~3 min):
+> This project used to authenticate with a fine-grained PAT (`GH_TOKEN`),
+> which expired and needed manual renewal - that's why an older version of
+> this doc had a dated `cloudflare-pat` reminder. The GitHub App migration
+> removed that task entirely.
 
-1. <https://github.com/settings/personal-access-tokens> -> **Generate new token**
-   -> fine-grained, repo `Mozi-E/tv-tracker`, **Contents: Read and write**.
-2. Cloudflare -> the Worker -> **Settings -> Variables and Secrets** -> edit
-   `GH_TOKEN` -> paste -> **Save** (redeploys).
-3. In `data/maintenance.json` set `cloudflare-pat`'s `due` to the new expiry
-   date (or `+90 days`) and commit.
-
-> **Set the real date now:** open your token at the link above, read its
-> expiry, and put it in `data/maintenance.json`. The seeded date is a guess.
-> If you chose "No expiration", set `due` far in the future - nothing to do.
-
-### 2. Annual secret rotation  (`rotate-secrets`)
+### 1. Annual secret rotation  (`rotate-secrets`)
 
 Optional hygiene, once a year:
 
