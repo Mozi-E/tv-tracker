@@ -7,8 +7,9 @@ import html
 import json
 import os
 import sys
+from datetime import date
 
-from . import config, maintenance, telegram, tmdb
+from . import config, maintenance, recommend, recommender, telegram, tmdb
 from .commands import handle_update
 from .diff import diff_movie, diff_tv, movie_snapshot, tv_snapshot
 from .store import (
@@ -117,7 +118,11 @@ def run_checks(titles_data: dict, state: dict) -> None:
         mt, tmdb_id, name = t["media_type"], t["id"], t["title"]
         try:
             if mt == "tv":
-                snap = tv_snapshot(tmdb.tv_details(tmdb_id))
+                try:
+                    kw = tmdb.tv_keywords(tmdb_id)
+                except Exception:  # keywords are optional recommender signal
+                    kw = []
+                snap = tv_snapshot(tmdb.tv_details(tmdb_id), keywords=kw)
                 changes = diff_tv(st_titles.get(k), snap)
             else:
                 md = tmdb.movie_details(tmdb_id)
@@ -144,6 +149,45 @@ def run_checks(titles_data: dict, state: dict) -> None:
 
     for stale in [k for k in st_titles if k not in by_key]:
         del st_titles[stale]
+
+
+def run_recommendations(titles_data: dict, state: dict) -> None:
+    """Once a week (Thursday), send each user one show recommendation based on
+    what they already track. Set TV_TRACKER_FORCE_RECOMMEND=1 to run any day."""
+    if not os.environ.get("TV_TRACKER_FORCE_RECOMMEND", "").strip():
+        if date.today().weekday() != 3:  # Mon=0 .. Thu=3
+            print("[recommend] not Thursday, skipping")
+            return
+
+    week = recommend.iso_week(date.today())
+    st_titles = state.get("titles", {})
+    for uid_str, urec in titles_data.get("users", {}).items():
+        try:
+            uid = int(uid_str)
+        except (TypeError, ValueError):
+            continue
+        if urec.get("last_rec_week") == week:
+            continue
+        tracked = [t["id"] for t in urec.get("titles", []) if t.get("media_type") == "tv"]
+        if not tracked:
+            continue
+        exclude = set(tracked) | set(urec.get("declined", [])) | set(urec.get("recommended", []))
+        try:
+            msg, picked = recommender.recommend_for_user(tracked, st_titles, exclude)
+        except Exception as e:  # a rec failure must never abort the run
+            print(f"[recommend] {uid}: {e}")
+            continue
+        if not msg:
+            print(f"[recommend] {uid}: nothing suitable this week")
+            urec["last_rec_week"] = week
+            continue
+        if _notify_targets([uid], msg, parse_mode="HTML"):
+            urec.setdefault("recommended", []).append(picked)
+            del urec["recommended"][:-60]
+            urec["last_rec_week"] = week
+            print(f"[recommend] {uid}: suggested tv:{picked}")
+        else:
+            print(f"[recommend] {uid}: not delivered, will retry next run")
 
 
 def run_maintenance(state: dict) -> None:
@@ -173,6 +217,8 @@ def main(argv=None) -> None:
         process_commands(titles_data, state, invites)
     if "--no-check" not in argv:
         run_checks(titles_data, state)
+    if "--no-recommend" not in argv:
+        run_recommendations(titles_data, state)
     if "--no-maintenance" not in argv:
         run_maintenance(state)
 

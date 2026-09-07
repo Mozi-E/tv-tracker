@@ -12,6 +12,7 @@ import json
 import os
 import sys
 import tempfile
+from datetime import date, timedelta
 
 DATA = tempfile.mkdtemp(prefix="tvt-it-")
 os.environ["TV_TRACKER_DATA_DIR"] = DATA
@@ -37,6 +38,11 @@ def stub_send_message(chat_id, text, parse_mode=None):
 telegram.get_updates = stub_get_updates
 telegram.send_message = stub_send_message
 telegram.get_me = lambda: {"username": "elior_tvtracker_bot"}
+tmdb.tv_keywords = lambda i: []            # run_checks fetches these per show
+tmdb.tv_genre_map = lambda: {}             # recommender deps - safe no-op defaults
+tmdb.tv_recommendations = lambda i: []
+tmdb.discover_tv = lambda params: []
+tmdb.watch_providers = lambda mt, i: {"results": {}}
 
 # --- fake TMDB world -------------------------------------------------------
 TV = {
@@ -134,7 +140,6 @@ check("webhook idle: nothing sent, no crash", sent == [])
 print("Run 7: re-add the show, then Season 2 Episode 2 airs today")
 sent.clear()
 del os.environ["TELEGRAM_WEBHOOK_MODE"]
-from datetime import date
 TODAY = date.today().isoformat()
 telegram.get_updates = lambda *a, **k: [
     {"update_id": 7001, "message": {"text": "/add game of thrones", "chat": {"id": 777}}}
@@ -234,6 +239,42 @@ check("/where reply reaches the right user", sent and sent[0][0] == 777)
 check("/where reply names the provider", "HBO Max" in sent[0][1])
 del os.environ["TELEGRAM_UPDATE_JSON"]
 del os.environ["TELEGRAM_WEBHOOK_MODE"]
+
+print("Run 15: give 4242's show real genres so it has a taste profile")
+TV[9999] = dict(TV[9999], genres=[
+    {"id": 10765, "name": "Sci-Fi & Fantasy"}, {"id": 18, "name": "Drama"},
+])
+run.main(["--no-recommend"])  # refresh the tv:9999 snapshot with genres
+
+print("Run 16: forced weekly recommendation - only 4242 (has a profile) gets one")
+sent.clear()
+_future = (date.today() + timedelta(days=45)).isoformat()
+tmdb.tv_genre_map = lambda: {10765: "Sci-Fi & Fantasy", 18: "Drama", 35: "Comedy"}
+tmdb.tv_recommendations = lambda i: [
+    {"id": 700, "name": "Upcoming Sci-Fi", "genre_ids": [10765, 18],
+     "first_air_date": _future, "popularity": 70, "vote_average": 8.1},
+    {"id": 701, "name": "Old Sitcom", "genre_ids": [35],
+     "first_air_date": "2009-01-01", "popularity": 99, "vote_average": 6.0},
+]
+TV[700] = {
+    "name": "Upcoming Sci-Fi", "status": "Returning Series", "number_of_seasons": 1,
+    "seasons": [], "last_episode_to_air": None, "next_episode_to_air": None,
+    "genres": [{"id": 10765, "name": "Sci-Fi & Fantasy"}, {"id": 18, "name": "Drama"}],
+    "networks": [{"id": 1, "name": "Apple TV+"}], "vote_average": 8.1, "first_air_date": _future,
+}
+tmdb.watch_providers = lambda mt, i: {"results": {"IL": {"flatrate": [{"provider_name": "Apple TV+"}]}}}
+os.environ["TV_TRACKER_FORCE_RECOMMEND"] = "1"
+run.main(["--no-check", "--no-maintenance"])
+check("exactly one recommendation sent", len(sent) == 1)
+check("recommendation went to 4242 (has a profile)", sent[0][0] == 4242)
+check("recommendation names the upcoming show", "Upcoming Sci-Fi" in sent[0][1])
+check("4242's pick is recorded", 700 in load("titles.json")["users"]["4242"].get("recommended", []))
+
+print("Run 17: forced again the same week - no repeat")
+sent.clear()
+run.main(["--no-check", "--no-maintenance"])
+check("no second recommendation this week", sent == [])
+del os.environ["TV_TRACKER_FORCE_RECOMMEND"]
 
 print(f"\n{'FAILED' if fails else 'PASSED'} ({fails} failing)")
 sys.exit(1 if fails else 0)

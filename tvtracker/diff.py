@@ -48,8 +48,14 @@ def _current_episode_keys(snap: dict, aired_only: bool = False):
     return [ep["key"] for ep in eps if ep and ep.get("key")]
 
 
-def tv_snapshot(details: dict) -> dict:
-    """Reduce a TMDB /tv/{id} response."""
+def tv_snapshot(details: dict, keywords=None) -> dict:
+    """Reduce a TMDB /tv/{id} response.
+
+    `keywords` (a list of names from /tv/{id}/keywords) is optional; only the
+    daily check bothers to fetch it, so the recommender has taste signal to
+    work with. diff_tv ignores genres/keywords/networks - they never trigger
+    an alert, they just ride along in the stored snapshot.
+    """
     seasons = {}
     for s in details.get("seasons") or []:
         num = s.get("season_number")
@@ -65,6 +71,11 @@ def tv_snapshot(details: dict) -> dict:
         "last_episode": _episode(details.get("last_episode_to_air")),
         "next_episode": _episode(details.get("next_episode_to_air")),
         "notified_episodes": [],  # episode keys we've already alerted on
+        "genres": [g["name"] for g in details.get("genres") or [] if g.get("name")],
+        "networks": [n["name"] for n in details.get("networks") or [] if n.get("name")],
+        "keywords": list(keywords) if keywords else [],
+        "vote_average": details.get("vote_average"),
+        "first_air_date": details.get("first_air_date") or None,
     }
 
 

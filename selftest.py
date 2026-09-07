@@ -14,7 +14,7 @@ os.environ.setdefault("TV_TRACKER_DATA_DIR", tempfile.mkdtemp(prefix="tvt-"))
 
 from datetime import date, timedelta
 
-from tvtracker import commands, maintenance, store, telegram, tmdb
+from tvtracker import commands, maintenance, recommend, recommender, store, telegram, tmdb
 from tvtracker.diff import diff_movie, diff_tv, movie_snapshot, tv_snapshot
 
 PASS = 0
@@ -398,6 +398,133 @@ def test_where_to_watch():
     check("/where <name> resolves via search", "Netflix" in r[0][1])
 
 
+def test_recommend_logic():
+    print("Recommendation scoring")
+    snaps = [
+        {"genres": ["Sci-Fi & Fantasy", "Drama"], "keywords": ["dystopia"], "networks": ["Apple TV+"], "vote_average": 8.4},
+        {"genres": ["Sci-Fi & Fantasy", "Mystery"], "keywords": ["dystopia", "based on novel"], "networks": ["Apple TV+"], "vote_average": 8.0},
+    ]
+    p = recommend.build_profile(snaps)
+    check("profile counts genres", p["genres"]["Sci-Fi & Fantasy"] == 2 and p["genres"]["Drama"] == 1)
+    check("profile counts keywords", p["keywords"]["dystopia"] == 2)
+    check("profile avg rating", abs(p["avg_rating"] - 8.2) < 0.001)
+
+    check("iso_week format", recommend.iso_week(date(2026, 9, 3)) == "2026-W36")
+
+    gmap = {10765: "Sci-Fi & Fantasy", 18: "Drama", 35: "Comedy"}
+    scifi = {"genre_ids": [10765, 18], "popularity": 30, "vote_average": 8.1}
+    comedy = {"genre_ids": [35], "popularity": 30, "vote_average": 6.0}
+    check("coarse: on-genre beats off-genre",
+          recommend.coarse_score(scifi, p, gmap) > recommend.coarse_score(comedy, p, gmap))
+
+    future = (date.today() + timedelta(days=30)).isoformat()
+    far = (date.today() + timedelta(days=400)).isoformat()
+    cands = [
+        {"id": 1, "genre_ids": [10765, 18], "first_air_date": future, "popularity": 50, "vote_average": 8.0},
+        {"id": 2, "genre_ids": [35], "first_air_date": future, "popularity": 90, "vote_average": 6.0},
+        {"id": 3, "genre_ids": [10765], "first_air_date": "2010-01-01", "popularity": 99, "vote_average": 8.0},
+        {"id": 4, "genre_ids": [10765], "first_air_date": far, "popularity": 99, "vote_average": 8.0},
+    ]
+    sl = recommend.shortlist(cands, p, gmap, exclude_ids={2}, limit=5)
+    ids = [c["id"] for c in sl]
+    check("shortlist drops excluded", 2 not in ids)
+    check("shortlist drops already-aired", 3 not in ids)
+    check("shortlist drops too-far-out", 4 not in ids)
+    check("shortlist keeps the upcoming on-genre one", ids == [1])
+
+    enriched = [
+        {"id": 1, "name": "A", "genres": ["Sci-Fi & Fantasy", "Drama"], "keywords": ["dystopia"],
+         "networks": ["Apple TV+"], "vote_average": 8.1, "popularity": 40, "first_air_date": future},
+        {"id": 5, "name": "B", "genres": ["Comedy"], "keywords": [], "networks": [],
+         "vote_average": 6.0, "popularity": 40, "first_air_date": future},
+    ]
+    pick = recommend.best(enriched, p)
+    check("best picks the strongest match", pick and pick["id"] == 1)
+    check("describe_match names the overlap",
+          "Sci-Fi & Fantasy" in recommend.describe_match(enriched[0], p))
+
+    check("best returns None when nothing is upcoming",
+          recommend.best([dict(enriched[0], first_air_date="2000-01-01")], p) is None)
+
+
+def test_recommender_integration():
+    print("Recommender (TMDB stubbed)")
+    state_titles = {
+        "tv:1": {"genres": ["Sci-Fi & Fantasy", "Drama"], "keywords": ["dystopia"],
+                 "networks": ["Apple TV+"], "vote_average": 8.3},
+    }
+    future = (date.today() + timedelta(days=45)).isoformat()
+
+    tmdb.tv_genre_map = lambda: {10765: "Sci-Fi & Fantasy", 18: "Drama", 35: "Comedy"}
+    tmdb.tv_recommendations = lambda i: [
+        {"id": 700, "name": "New Sci-Fi Thing", "genre_ids": [10765, 18],
+         "first_air_date": future, "popularity": 60, "vote_average": 8.2},
+        {"id": 701, "name": "Old Comedy", "genre_ids": [35],
+         "first_air_date": "2010-01-01", "popularity": 90, "vote_average": 6.0},
+    ]
+    tmdb.discover_tv = lambda params: []
+    tmdb.tv_details = lambda i: {
+        "name": "New Sci-Fi Thing", "status": "Returning Series", "number_of_seasons": 1,
+        "seasons": [], "genres": [{"id": 10765, "name": "Sci-Fi & Fantasy"}, {"id": 18, "name": "Drama"}],
+        "networks": [{"id": 1, "name": "Apple TV+"}], "vote_average": 8.2, "first_air_date": future,
+    }
+    tmdb.tv_keywords = lambda i: ["dystopia", "based on novel"]
+    tmdb.watch_providers = lambda mt, i: {"results": {"IL": {"flatrate": [{"provider_name": "Apple TV+"}]}}}
+
+    msg, picked = recommender.recommend_for_user([1], state_titles, exclude_ids={1})
+    check("recommender returns a pick", picked == 700)
+    check("message names the show", msg and "New Sci-Fi Thing" in msg)
+    check("message says when it premieres", future in msg)
+    check("message includes Israeli availability", "Apple TV+" in msg)
+
+    msg, picked = recommender.recommend_for_user([1], state_titles, exclude_ids={1, 700})
+    check("excluded pick yields nothing", msg is None and picked is None)
+
+    msg, picked = recommender.recommend_for_user([99], {}, exclude_ids=set())
+    check("no usable snapshots -> nothing", msg is None)
+
+
+def test_rec_command():
+    print("/rec command")
+    titles = {"users": {}}
+    state = _fresh_state()
+    state["subscribers"] = [555]
+    state["admins"] = [555]
+    state["titles"] = {}
+    invites = {"invites": {}}
+
+    r = commands.handle_update(_update("/rec"), titles, state, invites)
+    check("/rec with no tracked shows nudges to /add", "Track a few shows" in r[0][1])
+
+    store.user_titles(titles, 555).append({"id": 1, "media_type": "tv", "title": "Show One"})
+
+    recommender.recommend_for_user = lambda tracked, st, exclude, today=None: (
+        "\U0001f3ac Weekly pick: Cool New Show", 900
+    )
+    r = commands.handle_update(_update("/rec"), titles, state, invites)
+    check("/rec returns the recommendation", "Cool New Show" in r[0][1])
+    check("/rec records the pick so it won't repeat",
+          900 in store.user_record(titles, 555)["recommended"])
+
+    recommender.recommend_for_user = lambda tracked, st, exclude, today=None: (None, None)
+    r = commands.handle_update(_update("/rec"), titles, state, invites)
+    check("/rec with nothing suitable says so", "Nothing upcoming" in r[0][1])
+
+
+def test_decline_on_remove():
+    print("Removing a show declines it for recommendations")
+    titles = {"users": {}}
+    state = _fresh_state()
+    state["subscribers"] = [555]
+    state["admins"] = [555]
+    invites = {"invites": {}}
+    store.user_titles(titles, 555).append({"id": 42, "media_type": "tv", "title": "Dropped Show"})
+
+    commands.handle_update(_update("/remove 1"), titles, state, invites)
+    check("removed show id is remembered as declined",
+          42 in store.user_record(titles, 555).get("declined", []))
+
+
 def test_maintenance():
     print("Maintenance reminders")
 
@@ -447,6 +574,10 @@ if __name__ == "__main__":
     test_url_parsing_and_add()
     test_pending_announcement_note()
     test_where_to_watch()
+    test_recommend_logic()
+    test_recommender_integration()
+    test_rec_command()
+    test_decline_on_remove()
     test_maintenance()
     print(f"\n{PASS} passed, {FAIL} failed")
     sys.exit(1 if FAIL else 0)

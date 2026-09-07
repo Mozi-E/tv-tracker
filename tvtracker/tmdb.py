@@ -82,3 +82,25 @@ def collection_details(collection_id: int):
 def watch_providers(media_type: str, tmdb_id) -> dict:
     """JustWatch-sourced availability, keyed by country in `results`."""
     return _get(f"/{media_type}/{tmdb_id}/watch/providers")
+
+
+def tv_keywords(tv_id) -> list:
+    """List of keyword names for a show (e.g. 'dystopia', 'based on novel')."""
+    data = _get(f"/tv/{tv_id}/keywords")
+    return [k["name"] for k in data.get("results", []) if k.get("name")]
+
+
+def tv_recommendations(tv_id) -> list:
+    """TMDB's own 'people who like this also like' list for a show."""
+    return _get(f"/tv/{tv_id}/recommendations").get("results", [])
+
+
+def tv_genre_map() -> dict:
+    """{genre_id: name} for TV, so discover/recommendation genre_ids resolve."""
+    data = _get("/genre/tv/list")
+    return {g["id"]: g["name"] for g in data.get("genres", [])}
+
+
+def discover_tv(params: dict) -> list:
+    """/discover/tv with arbitrary query params (e.g. 'first_air_date.gte')."""
+    return _get("/discover/tv", **params).get("results", [])

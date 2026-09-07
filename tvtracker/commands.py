@@ -10,9 +10,9 @@ import html
 import secrets as _secrets
 from datetime import date, timedelta
 
-from . import tmdb, telegram
+from . import recommender, tmdb, telegram
 from .diff import movie_snapshot, tv_snapshot
-from .store import key_for, user_titles
+from .store import key_for, user_record, user_titles
 
 HELP = (
     "TV & Movie Tracker\n"
@@ -25,11 +25,12 @@ HELP = (
     "/remove &lt;number&gt;   - stop tracking item &lt;number&gt; from /list\n"
     "/where &lt;number&gt;    - where to watch it in Israel\n"
     "/where &lt;name&gt;      - same, by name/link/id instead of list number\n"
+    "/rec               - a show recommendation based on what you track\n"
     "/help              - show this message\n"
     "/invite [uses] [days] - (admin only) create a share link, default 1 use / 7 days\n"
     "\n"
-    "Once a day I check TMDB. When a new season is announced or released, "
-    "or a sequel shows up, I message you here."
+    "Once a day I check TMDB for new seasons, episodes and sequels. Every "
+    "Thursday I also send you one recommendation for an upcoming show."
 )
 
 NOT_INVITED = (
@@ -81,6 +82,8 @@ def handle_update(update: dict, titles_data: dict, state: dict, invites: dict):
         return _cmd_remove(args, chat_id, titles_data)
     if cmd == "/where":
         return _cmd_where(args, chat_id, titles_data)
+    if cmd == "/rec":
+        return _cmd_rec(chat_id, titles_data, state)
     if cmd == "/invite":
         return _cmd_invite(args, chat_id, state, invites)
     return [(chat_id, f"Unknown command {cmd}. Try /help.")]
@@ -268,34 +271,61 @@ def _do_add(mt, tmdb_id, title, chat_id, titles_data, details=None):
 
 # -------------------------------------------------------------------- remove
 
+def _decline(titles_data, chat_id, removed):
+    """Remember a removed show so the recommender won't suggest it back."""
+    if removed.get("media_type") != "tv":
+        return
+    declined = user_record(titles_data, chat_id).setdefault("declined", [])
+    if removed["id"] not in declined:
+        declined.append(removed["id"])
+        del declined[:-100]
+
+
+def _remove_reply(chat_id, removed):
+    return [(
+        chat_id,
+        f'Stopped tracking {_link(removed["media_type"], removed["id"], removed["title"])}.',
+        "HTML",
+    )]
+
+
 def _cmd_remove(args, chat_id, titles_data):
     lst = user_titles(titles_data, chat_id)
     if len(args) == 1 and args[0].isdigit():
         idx = int(args[0]) - 1
         if 0 <= idx < len(lst):
             removed = lst.pop(idx)
-            return [
-                (
-                    chat_id,
-                    f'Stopped tracking {_link(removed["media_type"], removed["id"], removed["title"])}.',
-                    "HTML",
-                )
-            ]
+            _decline(titles_data, chat_id, removed)
+            return _remove_reply(chat_id, removed)
         return [(chat_id, f"There is no item #{args[0]}. Check /list.")]
     if len(args) >= 2 and args[0].lower() in ("tv", "movie") and args[1].isdigit():
         k = key_for(args[0].lower(), int(args[1]))
         for i, t in enumerate(lst):
             if key_for(t["media_type"], t["id"]) == k:
                 removed = lst.pop(i)
-                return [
-                    (
-                        chat_id,
-                        f'Stopped tracking {_link(removed["media_type"], removed["id"], removed["title"])}.',
-                        "HTML",
-                    )
-                ]
+                _decline(titles_data, chat_id, removed)
+                return _remove_reply(chat_id, removed)
         return [(chat_id, "That title is not in your list.")]
     return [(chat_id, "Usage: /remove <number from /list>")]
+
+
+# -------------------------------------------------------------------- rec
+
+def _cmd_rec(chat_id, titles_data, state):
+    rec = user_record(titles_data, chat_id)
+    tracked = [t["id"] for t in rec.get("titles", []) if t.get("media_type") == "tv"]
+    if not tracked:
+        return [(chat_id, "Track a few shows first with /add, then I can recommend something.")]
+    exclude = set(tracked) | set(rec.get("declined", [])) | set(rec.get("recommended", []))
+    try:
+        msg, picked = recommender.recommend_for_user(tracked, state.get("titles", {}), exclude)
+    except Exception as e:
+        return [(chat_id, f"Couldn't build a recommendation: {e}")]
+    if not msg:
+        return [(chat_id, "Nothing upcoming that fits your taste right now - try again in a week or two.")]
+    rec.setdefault("recommended", []).append(picked)
+    del rec["recommended"][:-60]
+    return [(chat_id, msg, "HTML")]
 
 
 # ----------------------------------------------------------------- where

@@ -7,6 +7,9 @@ and sends a Telegram message when:
 - a **new episode** of a tracked show airs (on/around its air date), or
 - a **sequel / related film** appears in a tracked movie's franchise (TMDB "collection").
 
+It also sends each user **one show recommendation every Thursday**, based on
+the genres/keywords/networks of the shows they already track.
+
 Each Telegram user who's been let in (see [Access control](#access-control))
 gets **their own watch-list**, managed with `/add`, `/list`, `/remove`.
 Two people tracking the same show only cost one TMDB check - the check is
@@ -21,10 +24,12 @@ tvtracker/        the package
   tmdb.py         tiny TMDB v3 client
   telegram.py     tiny Telegram Bot API client
   diff.py         pure logic: TMDB payload -> snapshot -> list of changes
-  commands.py     the /add /list /remove /invite chat interface
-  run.py          orchestration (process commands, then run checks)
+  recommend.py    pure logic: taste profile + candidate scoring
+  recommender.py  gathers/ranks candidates for the weekly rec (does the I/O)
+  commands.py     the /add /list /remove /where /rec /invite chat interface
+  run.py          orchestration (commands, then checks, then rec, then upkeep)
 check.py          entry point  ->  python check.py
-data/titles.json  one watch-list per user (managed over Telegram)
+data/titles.json  per user: their watch-list + recommendation bookkeeping
 data/state.json   last-seen snapshot per title (shared) + bot bookkeeping
 data/invites.json share-link tokens created with /invite
 .github/workflows/check.yml   the daily job
@@ -102,6 +107,7 @@ check.
 /remove 2                                        stop tracking item #2 from /list
 /where 2                                         where to watch item #2 in Israel
 /where The Bear                                  same, by name/link/id instead of a list number
+/rec                                             a show recommendation, on demand
 /invite [uses] [days]                            (admin) share-link, default 1 use / 7 days
 /help                                            command reference
 ```
@@ -123,6 +129,23 @@ a repeat of the change alerts described above.
 JustWatch's Israel availability via TMDB and replies with subscription /
 free / rent / buy options and a link to the full listing. Coverage depends on
 what JustWatch has for that title - not everything has Israeli data.
+
+### Weekly recommendation
+
+Every **Thursday** the daily run also sends each user one recommendation for
+an **upcoming** show (premiering within ~5 months), chosen from TMDB's
+"recommended" lists for the shows they track plus a genre-filtered
+`/discover/tv` query. Candidates are scored on how much their genres,
+keywords and network overlap with the user's tracked shows, minus a penalty
+for straying from that user's usual rating level. Already-tracked shows, ones
+you've `/remove`d, and past recommendations are excluded; if nothing clears
+the bar that week, nothing is sent. `/rec` runs the same thing on demand.
+
+It's a heuristic, not a model - good at "you like prestige sci-fi, here's the
+new one premiering next month", weaker on nuance. Recommendations only cover
+TV; a user who tracks only movies won't get one. The weekday gate lives in
+code (`run.py`), so no cron change is needed; `TV_TRACKER_FORCE_RECOMMEND=1`
+makes it run on any day for testing.
 
 ### Access control
 

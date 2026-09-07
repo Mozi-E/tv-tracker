@@ -63,10 +63,15 @@ def save_titles(data: dict) -> None:
     _atomic_write(_titles_path(), data)
 
 
+def user_record(titles_data: dict, chat_id) -> dict:
+    """A user's whole per-user object: titles + recommendation bookkeeping
+    (declined ids, already-recommended ids, last_rec_week)."""
+    return titles_data.setdefault("users", {}).setdefault(str(chat_id), {})
+
+
 def user_titles(titles_data: dict, chat_id) -> list:
     """The mutable list of titles a specific user tracks."""
-    users = titles_data.setdefault("users", {})
-    return users.setdefault(str(chat_id), {}).setdefault("titles", [])
+    return user_record(titles_data, chat_id).setdefault("titles", [])
 
 
 def all_titles_by_key(titles_data: dict):
