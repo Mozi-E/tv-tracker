@@ -34,7 +34,8 @@
     182911163,
     182911164,
     182911165,
-    182911166
+    182911166,
+    182911167
   ],
   "subscribers": [
     5179879702
@@ -42,6 +43,29 @@
   "telegram_offset": 182911133,
   "titles": {
     "tv:125988": {
+      "first_air_date": "2023-05-04",
+      "genres": [
+        "Sci-Fi & Fantasy",
+        "Drama"
+      ],
+      "keywords": [
+        "corruption",
+        "based on novel or book",
+        "post-apocalyptic future",
+        "dystopia",
+        "politics",
+        "disaster",
+        "hidden powers",
+        "silo",
+        "philosophical",
+        "societal ignorance",
+        "systemic corruption",
+        "suspenseful",
+        "intense",
+        "ominous",
+        "powerful",
+        "tragic"
+      ],
       "kind": "tv",
       "last_episode": {
         "air_date": "2026-09-03",
@@ -49,6 +73,9 @@
         "name": "Troy"
       },
       "name": "Silo",
+      "networks": [
+        "Apple TV"
+      ],
       "next_episode": {
         "air_date": "2027-07-08",
         "key": "S04E01",
@@ -65,9 +92,32 @@
         "3": "2026-07-02",
         "4": "2027-07-08"
       },
-      "status": "Returning Series"
+      "status": "Returning Series",
+      "vote_average": 8.204
     },
     "tv:136311": {
+      "first_air_date": "2023-01-26",
+      "genres": [
+        "Drama",
+        "Comedy"
+      ],
+      "keywords": [
+        "therapist",
+        "grieving widower",
+        "psychologist",
+        "teenage daughter",
+        "next door neighbor",
+        "mentor protégé relationship",
+        "grieving",
+        "dramedy",
+        "death of wife",
+        "workplace comedy",
+        "grieving daughter",
+        "father daughter relationship",
+        "cognitive behavioral therapy",
+        "widower with daughter",
+        "earnest"
+      ],
       "kind": "tv",
       "last_episode": {
         "air_date": "2026-04-07",
@@ -75,6 +125,9 @@
         "name": "And That's Our Time"
       },
       "name": "Shrinking",
+      "networks": [
+        "Apple TV"
+      ],
       "next_episode": null,
       "notified_episodes": [
         "S03E11"
@@ -85,9 +138,32 @@
         "2": "2024-10-15",
         "3": "2026-01-27"
       },
-      "status": "Returning Series"
+      "status": "Returning Series",
+      "vote_average": 7.841
     },
     "tv:225171": {
+      "first_air_date": "2025-11-06",
+      "genres": [
+        "Drama",
+        "Sci-Fi & Fantasy"
+      ],
+      "keywords": [
+        "new mexico",
+        "dystopia",
+        "alone",
+        "loneliness",
+        "dark comedy",
+        "virus",
+        "albuquerque, new mexico",
+        "disturbed",
+        "strange",
+        "immunity",
+        "lesbian",
+        "miserable",
+        "helpfulness",
+        "happiness",
+        "collective"
+      ],
       "kind": "tv",
       "last_episode": {
         "air_date": "2025-12-23",
@@ -95,6 +171,9 @@
         "name": "La Chica o El Mundo"
       },
       "name": "Pluribus",
+      "networks": [
+        "Apple TV"
+      ],
       "next_episode": null,
       "notified_episodes": [
         "S01E09"
@@ -103,9 +182,23 @@
       "seasons": {
         "1": "2025-11-06"
       },
-      "status": "Returning Series"
+      "status": "Returning Series",
+      "vote_average": 7.936
     },
     "tv:82856": {
+      "first_air_date": "2019-11-12",
+      "genres": [
+        "Sci-Fi & Fantasy",
+        "Action & Adventure"
+      ],
+      "keywords": [
+        "bounty hunter",
+        "affectation",
+        "space western",
+        "space opera",
+        "space exploration",
+        "quest"
+      ],
       "kind": "tv",
       "last_episode": {
         "air_date": "2023-04-19",
@@ -113,6 +206,9 @@
         "name": "Chapter 24: The Return"
       },
       "name": "The Mandalorian",
+      "networks": [
+        "Disney+"
+      ],
       "next_episode": null,
       "notified_episodes": [
         "S03E08"
@@ -123,9 +219,28 @@
         "2": "2020-10-30",
         "3": "2023-03-01"
       },
-      "status": "Ended"
+      "status": "Ended",
+      "vote_average": 8.404
     },
     "tv:84773": {
+      "first_air_date": "2022-09-01",
+      "genres": [
+        "Action & Adventure",
+        "Drama",
+        "Sci-Fi & Fantasy"
+      ],
+      "keywords": [
+        "elves",
+        "dwarf",
+        "based on novel or book",
+        "prequel",
+        "troll",
+        "battle",
+        "fantasy world",
+        "mysterious stranger",
+        "high fantasy",
+        "sword and sorcery"
+      ],
       "kind": "tv",
       "last_episode": {
         "air_date": "2024-10-03",
@@ -133,6 +248,9 @@
         "name": "Shadow and Flame"
       },
       "name": "The Lord of the Rings: The Rings of Power",
+      "networks": [
+        "Prime Video"
+      ],
       "next_episode": {
         "air_date": "2026-11-11",
         "key": "S03E01",
@@ -147,9 +265,27 @@
         "2": "2024-08-29",
         "3": "2026-11-10"
       },
-      "status": "Returning Series"
+      "status": "Returning Series",
+      "vote_average": 7.219
     },
     "tv:93740": {
+      "first_air_date": "2021-09-23",
+      "genres": [
+        "Sci-Fi & Fantasy",
+        "Drama"
+      ],
+      "keywords": [
+        "prophecy",
+        "based on novel or book",
+        "empire",
+        "distant future",
+        "space opera",
+        "aggressive",
+        "domineering",
+        "human clone",
+        "wonder",
+        "tense"
+      ],
       "kind": "tv",
       "last_episode": {
         "air_date": "2025-09-11",
@@ -157,6 +293,9 @@
         "name": "The Darkness"
       },
       "name": "Foundation",
+      "networks": [
+        "Apple TV"
+      ],
       "next_episode": null,
       "notified_episodes": [
         "S03E10"
@@ -167,9 +306,24 @@
         "2": "2023-07-13",
         "3": "2025-07-10"
       },
-      "status": "Returning Series"
+      "status": "Returning Series",
+      "vote_average": 7.705
     },
     "tv:95396": {
+      "first_air_date": "2022-02-17",
+      "genres": [
+        "Drama",
+        "Mystery",
+        "Sci-Fi & Fantasy"
+      ],
+      "keywords": [
+        "office",
+        "workplace",
+        "memory",
+        "office politics",
+        "brain surgery",
+        "thriller"
+      ],
       "kind": "tv",
       "last_episode": {
         "air_date": "2025-03-20",
@@ -177,6 +331,9 @@
         "name": "Cold Harbor"
       },
       "name": "Severance",
+      "networks": [
+        "Apple TV"
+      ],
       "next_episode": null,
       "notified_episodes": [
         "S02E10"
@@ -187,9 +344,35 @@
         "2": "2025-01-16",
         "3": null
       },
-      "status": "Returning Series"
+      "status": "Returning Series",
+      "vote_average": 8.393
     },
     "tv:97546": {
+      "first_air_date": "2020-08-14",
+      "genres": [
+        "Drama",
+        "Comedy"
+      ],
+      "keywords": [
+        "england",
+        "male friendship",
+        "friendship",
+        "fish out of water",
+        "football (soccer)",
+        "american abroad",
+        "teammate",
+        "professional sports",
+        "football (soccer) team",
+        "workplace comedy",
+        "team owner",
+        "football (soccer) coach",
+        "reflective",
+        "optimist",
+        "coaching",
+        "nice guy",
+        "premier league",
+        "joyful"
+      ],
       "kind": "tv",
       "last_episode": {
         "air_date": "2026-09-01",
@@ -197,6 +380,9 @@
         "name": "Riches of Embarrassment"
       },
       "name": "Ted Lasso",
+      "networks": [
+        "Apple TV"
+      ],
       "next_episode": {
         "air_date": "2026-09-08",
         "key": "S04E06",
@@ -213,7 +399,8 @@
         "3": "2023-03-14",
         "4": "2026-08-04"
       },
-      "status": "Returning Series"
+      "status": "Returning Series",
+      "vote_average": 8.369
     }
   }
 }
