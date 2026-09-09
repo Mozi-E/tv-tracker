@@ -93,7 +93,7 @@
         "4": "2027-07-08"
       },
       "status": "Returning Series",
-      "vote_average": 8.206
+      "vote_average": 8.203
     },
     "tv:136311": {
       "first_air_date": "2023-01-26",
@@ -139,7 +139,7 @@
         "3": "2026-01-27"
       },
       "status": "Returning Series",
-      "vote_average": 7.841
+      "vote_average": 7.843
     },
     "tv:225171": {
       "first_air_date": "2025-11-06",
@@ -183,7 +183,7 @@
         "1": "2025-11-06"
       },
       "status": "Returning Series",
-      "vote_average": 7.935
+      "vote_average": 7.937
     },
     "tv:82856": {
       "first_air_date": "2019-11-12",
@@ -220,7 +220,7 @@
         "3": "2023-03-01"
       },
       "status": "Ended",
-      "vote_average": 8.404
+      "vote_average": 8.403
     },
     "tv:84773": {
       "first_air_date": "2022-09-01",
@@ -266,7 +266,7 @@
         "3": "2026-11-10"
       },
       "status": "Returning Series",
-      "vote_average": 7.218
+      "vote_average": 7.217
     },
     "tv:93740": {
       "first_air_date": "2021-09-23",
@@ -375,18 +375,18 @@
       ],
       "kind": "tv",
       "last_episode": {
-        "air_date": "2026-09-01",
-        "key": "S04E05",
-        "name": "Riches of Embarrassment"
+        "air_date": "2026-09-08",
+        "key": "S04E06",
+        "name": "Don't Jump Around Much Anymore"
       },
       "name": "Ted Lasso",
       "networks": [
         "Apple TV"
       ],
       "next_episode": {
-        "air_date": "2026-09-08",
-        "key": "S04E06",
-        "name": "Don't Jump Around Much Anymore"
+        "air_date": "2026-09-15",
+        "key": "S04E07",
+        "name": "Yes & Baby"
       },
       "notified_episodes": [
         "S04E04",
@@ -401,7 +401,7 @@
         "4": "2026-08-04"
       },
       "status": "Returning Series",
-      "vote_average": 8.371
+      "vote_average": 8.373
     }
   }
 }
