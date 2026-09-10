@@ -59,12 +59,7 @@
         "silo",
         "philosophical",
         "societal ignorance",
-        "systemic corruption",
-        "suspenseful",
-        "intense",
-        "ominous",
-        "powerful",
-        "tragic"
+        "systemic corruption"
       ],
       "kind": "tv",
       "last_episode": {
@@ -93,7 +88,7 @@
         "4": "2027-07-08"
       },
       "status": "Returning Series",
-      "vote_average": 8.203
+      "vote_average": 8.2
     },
     "tv:136311": {
       "first_air_date": "2023-01-26",
@@ -139,7 +134,7 @@
         "3": "2026-01-27"
       },
       "status": "Returning Series",
-      "vote_average": 7.843
+      "vote_average": 7.842
     },
     "tv:225171": {
       "first_air_date": "2025-11-06",
@@ -183,7 +178,7 @@
         "1": "2025-11-06"
       },
       "status": "Returning Series",
-      "vote_average": 7.937
+      "vote_average": 7.9
     },
     "tv:82856": {
       "first_air_date": "2019-11-12",
@@ -220,7 +215,7 @@
         "3": "2023-03-01"
       },
       "status": "Ended",
-      "vote_average": 8.403
+      "vote_average": 8.402
     },
     "tv:84773": {
       "first_air_date": "2022-09-01",
@@ -266,7 +261,7 @@
         "3": "2026-11-10"
       },
       "status": "Returning Series",
-      "vote_average": 7.217
+      "vote_average": 7.216
     },
     "tv:93740": {
       "first_air_date": "2021-09-23",
@@ -345,7 +340,7 @@
         "3": null
       },
       "status": "Returning Series",
-      "vote_average": 8.393
+      "vote_average": 8.394
     },
     "tv:97546": {
       "first_air_date": "2020-08-14",
@@ -370,8 +365,7 @@
         "optimist",
         "coaching",
         "nice guy",
-        "premier league",
-        "joyful"
+        "premier league"
       ],
       "kind": "tv",
       "last_episode": {
@@ -401,7 +395,7 @@
         "4": "2026-08-04"
       },
       "status": "Returning Series",
-      "vote_average": 8.373
+      "vote_average": 8.37
     }
   }
 }
