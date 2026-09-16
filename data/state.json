@@ -88,7 +88,7 @@
         "4": "2027-07-08"
       },
       "status": "Returning Series",
-      "vote_average": 8.212
+      "vote_average": 8.213
     },
     "tv:136311": {
       "first_air_date": "2023-01-26",
@@ -134,7 +134,7 @@
         "3": "2026-01-27"
       },
       "status": "Returning Series",
-      "vote_average": 7.845
+      "vote_average": 7.8
     },
     "tv:225171": {
       "first_air_date": "2025-11-06",
@@ -178,7 +178,7 @@
         "1": "2025-11-06"
       },
       "status": "Returning Series",
-      "vote_average": 7.9
+      "vote_average": 7.937
     },
     "tv:82856": {
       "first_air_date": "2019-11-12",
@@ -369,18 +369,18 @@
       ],
       "kind": "tv",
       "last_episode": {
-        "air_date": "2026-09-08",
-        "key": "S04E06",
-        "name": "Don't Jump Around Much Anymore"
+        "air_date": "2026-09-15",
+        "key": "S04E07",
+        "name": "Yes & Baby"
       },
       "name": "Ted Lasso",
       "networks": [
         "Apple TV"
       ],
       "next_episode": {
-        "air_date": "2026-09-15",
-        "key": "S04E07",
-        "name": "Yes & Baby"
+        "air_date": "2026-09-22",
+        "key": "S04E08",
+        "name": "Follow the Anger"
       },
       "notified_episodes": [
         "S04E04",
@@ -396,7 +396,7 @@
         "4": "2026-08-04"
       },
       "status": "Returning Series",
-      "vote_average": 8.369
+      "vote_average": 8.373
     }
   }
 }
