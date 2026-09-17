@@ -88,7 +88,7 @@
         "4": "2027-07-08"
       },
       "status": "Returning Series",
-      "vote_average": 8.213
+      "vote_average": 8.216
     },
     "tv:136311": {
       "first_air_date": "2023-01-26",
@@ -134,7 +134,7 @@
         "3": "2026-01-27"
       },
       "status": "Returning Series",
-      "vote_average": 7.8
+      "vote_average": 7.842
     },
     "tv:225171": {
       "first_air_date": "2025-11-06",
@@ -178,7 +178,7 @@
         "1": "2025-11-06"
       },
       "status": "Returning Series",
-      "vote_average": 7.937
+      "vote_average": 7.939
     },
     "tv:82856": {
       "first_air_date": "2019-11-12",
@@ -302,7 +302,7 @@
         "3": "2025-07-10"
       },
       "status": "Returning Series",
-      "vote_average": 7.7
+      "vote_average": 7.706
     },
     "tv:95396": {
       "first_air_date": "2022-02-17",
@@ -365,7 +365,8 @@
         "optimist",
         "coaching",
         "nice guy",
-        "premier league"
+        "premier league",
+        "ambivalent"
       ],
       "kind": "tv",
       "last_episode": {
@@ -396,7 +397,7 @@
         "4": "2026-08-04"
       },
       "status": "Returning Series",
-      "vote_average": 8.373
+      "vote_average": 8.372
     }
   }
 }
