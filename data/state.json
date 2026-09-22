@@ -88,7 +88,7 @@
         "4": "2027-07-08"
       },
       "status": "Returning Series",
-      "vote_average": 8.22
+      "vote_average": 8.221
     },
     "tv:136311": {
       "first_air_date": "2023-01-26",
@@ -256,7 +256,7 @@
       ],
       "number_of_seasons": 3,
       "seasons": {
-        "1": "2022-08-31",
+        "1": "2022-09-01",
         "2": "2024-08-29",
         "3": "2026-11-10"
       },
@@ -340,7 +340,7 @@
         "3": null
       },
       "status": "Returning Series",
-      "vote_average": 8.395
+      "vote_average": 8.4
     },
     "tv:97546": {
       "first_air_date": "2020-08-14",
@@ -387,7 +387,8 @@
         "S04E04",
         "S04E05",
         "S04E06",
-        "S04E07"
+        "S04E07",
+        "S04E08"
       ],
       "number_of_seasons": 4,
       "seasons": {
