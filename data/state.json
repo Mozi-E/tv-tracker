@@ -57,9 +57,9 @@
         "disaster",
         "hidden powers",
         "silo",
-        "philosophical",
         "societal ignorance",
-        "systemic corruption"
+        "systemic corruption",
+        "intense"
       ],
       "kind": "tv",
       "last_episode": {
@@ -134,7 +134,7 @@
         "3": "2026-01-27"
       },
       "status": "Returning Series",
-      "vote_average": 7.83
+      "vote_average": 7.828
     },
     "tv:225171": {
       "first_air_date": "2025-11-06",
@@ -178,7 +178,7 @@
         "1": "2025-11-06"
       },
       "status": "Returning Series",
-      "vote_average": 7.9
+      "vote_average": 7.93
     },
     "tv:82856": {
       "first_air_date": "2019-11-12",
@@ -398,7 +398,7 @@
         "4": "2026-08-04"
       },
       "status": "Returning Series",
-      "vote_average": 8.371
+      "vote_average": 8.372
     }
   }
 }
