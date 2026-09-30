@@ -88,7 +88,7 @@
         "4": "2027-07-08"
       },
       "status": "Returning Series",
-      "vote_average": 8.223
+      "vote_average": 8.2
     },
     "tv:136311": {
       "first_air_date": "2023-01-26",
@@ -178,7 +178,7 @@
         "1": "2025-11-06"
       },
       "status": "Returning Series",
-      "vote_average": 7.927
+      "vote_average": 7.928
     },
     "tv:82856": {
       "first_air_date": "2019-11-12",
@@ -215,7 +215,7 @@
         "3": "2023-03-01"
       },
       "status": "Ended",
-      "vote_average": 8.4
+      "vote_average": 8.402
     },
     "tv:84773": {
       "first_air_date": "2022-09-01",
@@ -261,7 +261,7 @@
         "3": "2026-11-10"
       },
       "status": "Returning Series",
-      "vote_average": 7.2
+      "vote_average": 7.213
     },
     "tv:93740": {
       "first_air_date": "2021-09-23",
@@ -370,18 +370,18 @@
       ],
       "kind": "tv",
       "last_episode": {
-        "air_date": "2026-09-22",
-        "key": "S04E08",
-        "name": "Follow the Anger"
+        "air_date": "2026-09-29",
+        "key": "S04E09",
+        "name": "Mae Rides the Bus"
       },
       "name": "Ted Lasso",
       "networks": [
         "Apple TV"
       ],
       "next_episode": {
-        "air_date": "2026-09-29",
-        "key": "S04E09",
-        "name": "Mae Rides the Bus"
+        "air_date": "2026-10-06",
+        "key": "S04E10",
+        "name": "The Departing Lass"
       },
       "notified_episodes": [
         "S04E04",
@@ -399,7 +399,7 @@
         "4": "2026-08-04"
       },
       "status": "Returning Series",
-      "vote_average": 8.367
+      "vote_average": 8.365
     }
   }
 }
