@@ -59,8 +59,7 @@
         "hidden powers",
         "silo",
         "societal ignorance",
-        "systemic corruption",
-        "intense"
+        "systemic corruption"
       ],
       "kind": "tv",
       "last_episode": {
@@ -89,7 +88,7 @@
         "4": "2027-07-08"
       },
       "status": "Returning Series",
-      "vote_average": 8.2
+      "vote_average": 8.219
     },
     "tv:136311": {
       "first_air_date": "2023-01-26",
@@ -135,7 +134,7 @@
         "3": "2026-01-27"
       },
       "status": "Returning Series",
-      "vote_average": 7.8
+      "vote_average": 7.827
     },
     "tv:225171": {
       "first_air_date": "2025-11-06",
@@ -179,7 +178,7 @@
         "1": "2025-11-06"
       },
       "status": "Returning Series",
-      "vote_average": 7.929
+      "vote_average": 7.93
     },
     "tv:82856": {
       "first_air_date": "2019-11-12",
@@ -216,7 +215,7 @@
         "3": "2023-03-01"
       },
       "status": "Ended",
-      "vote_average": 8.401
+      "vote_average": 8.4
     },
     "tv:84773": {
       "first_air_date": "2022-09-01",
@@ -303,7 +302,7 @@
         "3": "2025-07-10"
       },
       "status": "Returning Series",
-      "vote_average": 7.707
+      "vote_average": 7.7
     },
     "tv:95396": {
       "first_air_date": "2022-02-17",
@@ -400,7 +399,7 @@
         "4": "2026-08-04"
       },
       "status": "Returning Series",
-      "vote_average": 8.4
+      "vote_average": 8.365
     }
   }
 }
