@@ -180,7 +180,7 @@
         "1": "2025-11-06"
       },
       "status": "Returning Series",
-      "vote_average": 7.9
+      "vote_average": 7.913
     },
     "tv:82856": {
       "first_air_date": "2019-11-12",
@@ -262,7 +262,7 @@
         "3": "2026-11-10"
       },
       "status": "Returning Series",
-      "vote_average": 7.2
+      "vote_average": 7.211
     },
     "tv:93740": {
       "first_air_date": "2021-09-23",
@@ -296,15 +296,14 @@
       "notified_episodes": [
         "S03E10"
       ],
-      "number_of_seasons": 4,
+      "number_of_seasons": 3,
       "seasons": {
         "1": "2021-09-23",
         "2": "2023-07-13",
-        "3": "2025-07-10",
-        "4": null
+        "3": "2025-07-10"
       },
       "status": "Returning Series",
-      "vote_average": 7.7
+      "vote_average": 7.712
     },
     "tv:95396": {
       "first_air_date": "2022-02-17",
@@ -342,7 +341,7 @@
         "3": null
       },
       "status": "Returning Series",
-      "vote_average": 8.391
+      "vote_average": 8.39
     },
     "tv:97546": {
       "first_air_date": "2020-08-14",
