@@ -90,7 +90,7 @@
         "4": "2027-07-08"
       },
       "status": "Returning Series",
-      "vote_average": 8.232
+      "vote_average": 8.231
     },
     "tv:136311": {
       "first_air_date": "2023-01-26",
@@ -136,7 +136,7 @@
         "3": "2026-01-27"
       },
       "status": "Returning Series",
-      "vote_average": 7.828
+      "vote_average": 7.827
     },
     "tv:225171": {
       "first_air_date": "2025-11-06",
@@ -217,7 +217,7 @@
         "3": "2023-03-01"
       },
       "status": "Ended",
-      "vote_average": 8.398
+      "vote_average": 8.4
     },
     "tv:84773": {
       "first_air_date": "2022-09-01",
@@ -341,7 +341,7 @@
         "3": null
       },
       "status": "Returning Series",
-      "vote_average": 8.389
+      "vote_average": 8.4
     },
     "tv:97546": {
       "first_air_date": "2020-08-14",
@@ -396,7 +396,7 @@
         "4": "2026-08-04"
       },
       "status": "Returning Series",
-      "vote_average": 8.366
+      "vote_average": 8.365
     }
   }
 }
