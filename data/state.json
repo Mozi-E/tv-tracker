@@ -136,7 +136,7 @@
         "3": "2026-01-27"
       },
       "status": "Returning Series",
-      "vote_average": 7.8
+      "vote_average": 7.82
     },
     "tv:225171": {
       "first_air_date": "2025-11-06",
@@ -229,32 +229,38 @@
         "elves",
         "dwarf",
         "based on novel or book",
+        "magic",
         "prequel",
         "troll",
         "battle",
+        "political intrigue ",
         "fantasy world",
         "mysterious stranger",
         "high fantasy",
-        "sword and sorcery"
+        "sword and sorcery",
+        "political conflict",
+        "adventure",
+        "epic"
       ],
       "kind": "tv",
       "last_episode": {
-        "air_date": "2024-10-03",
-        "key": "S02E08",
-        "name": "Shadow and Flame"
+        "air_date": "2026-11-11",
+        "key": "S03E04",
+        "name": "Gundabad"
       },
       "name": "The Lord of the Rings: The Rings of Power",
       "networks": [
         "Prime Video"
       ],
       "next_episode": {
-        "air_date": "2026-11-11",
-        "key": "S03E01",
-        "name": "Marnûkh"
+        "air_date": "2026-11-18",
+        "key": "S03E05",
+        "name": "Episode 5"
       },
       "notified_episodes": [
         "S02E08",
-        "S03E01"
+        "S03E01",
+        "S03E04"
       ],
       "number_of_seasons": 3,
       "seasons": {
@@ -263,7 +269,7 @@
         "3": "2026-11-11"
       },
       "status": "Returning Series",
-      "vote_average": 7.217
+      "vote_average": 7.2
     },
     "tv:93740": {
       "first_air_date": "2021-09-23",
@@ -304,7 +310,7 @@
         "3": "2025-07-10"
       },
       "status": "Returning Series",
-      "vote_average": 7.71
+      "vote_average": 7.709
     },
     "tv:95396": {
       "first_air_date": "2022-02-17",
@@ -397,7 +403,7 @@
         "4": "2026-08-04"
       },
       "status": "Returning Series",
-      "vote_average": 8.4
+      "vote_average": 8.363
     }
   }
 }
