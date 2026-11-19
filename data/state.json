@@ -244,24 +244,25 @@
       ],
       "kind": "tv",
       "last_episode": {
-        "air_date": "2026-11-11",
-        "key": "S03E04",
-        "name": "Gundabad"
+        "air_date": "2026-11-18",
+        "key": "S03E06",
+        "name": "From Valinor"
       },
       "name": "The Lord of the Rings: The Rings of Power",
       "networks": [
         "Prime Video"
       ],
       "next_episode": {
-        "air_date": "2026-11-18",
-        "key": "S03E05",
-        "name": "The Lady of Lórien"
+        "air_date": "2026-11-25",
+        "key": "S03E07",
+        "name": "Episode 7"
       },
       "notified_episodes": [
         "S02E08",
         "S03E01",
         "S03E04",
-        "S03E05"
+        "S03E05",
+        "S03E06"
       ],
       "number_of_seasons": 3,
       "seasons": {
@@ -270,7 +271,7 @@
         "3": "2026-11-11"
       },
       "status": "Returning Series",
-      "vote_average": 7.218
+      "vote_average": 7.2
     },
     "tv:93740": {
       "first_air_date": "2021-09-23",
@@ -349,7 +350,7 @@
         "3": null
       },
       "status": "Returning Series",
-      "vote_average": 8.389
+      "vote_average": 8.388
     },
     "tv:97546": {
       "first_air_date": "2020-08-14",
@@ -404,7 +405,7 @@
         "4": "2026-08-04"
       },
       "status": "Returning Series",
-      "vote_average": 8.366
+      "vote_average": 8.4
     }
   }
 }
