@@ -136,7 +136,7 @@
         "3": "2026-01-27"
       },
       "status": "Returning Series",
-      "vote_average": 7.817
+      "vote_average": 7.818
     },
     "tv:225171": {
       "first_air_date": "2025-11-06",
@@ -255,14 +255,15 @@
       "next_episode": {
         "air_date": "2026-11-25",
         "key": "S03E07",
-        "name": "Forging the One Ring"
+        "name": "Orodruin"
       },
       "notified_episodes": [
         "S02E08",
         "S03E01",
         "S03E04",
         "S03E05",
-        "S03E06"
+        "S03E06",
+        "S03E07"
       ],
       "number_of_seasons": 3,
       "seasons": {
@@ -350,7 +351,7 @@
         "3": null
       },
       "status": "Returning Series",
-      "vote_average": 8.4
+      "vote_average": 8.387
     },
     "tv:97546": {
       "first_air_date": "2020-08-14",
@@ -408,7 +409,7 @@
         "4": "2026-08-04"
       },
       "status": "Returning Series",
-      "vote_average": 8.368
+      "vote_average": 8.367
     }
   }
 }
