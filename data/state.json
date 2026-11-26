@@ -90,7 +90,7 @@
         "4": "2027-07-08"
       },
       "status": "Returning Series",
-      "vote_average": 8.235
+      "vote_average": 8.2
     },
     "tv:136311": {
       "first_air_date": "2023-01-26",
@@ -136,7 +136,7 @@
         "3": "2026-01-27"
       },
       "status": "Returning Series",
-      "vote_average": 7.818
+      "vote_average": 7.82
     },
     "tv:225171": {
       "first_air_date": "2025-11-06",
@@ -180,7 +180,7 @@
         "1": "2025-11-06"
       },
       "status": "Returning Series",
-      "vote_average": 7.9
+      "vote_average": 7.926
     },
     "tv:82856": {
       "first_air_date": "2019-11-12",
@@ -244,26 +244,23 @@
       ],
       "kind": "tv",
       "last_episode": {
-        "air_date": "2026-11-18",
-        "key": "S03E06",
-        "name": "From Valinor"
+        "air_date": "2026-11-25",
+        "key": "S03E08",
+        "name": "The Doom of Men"
       },
       "name": "The Lord of the Rings: The Rings of Power",
       "networks": [
         "Prime Video"
       ],
-      "next_episode": {
-        "air_date": "2026-11-25",
-        "key": "S03E07",
-        "name": "Orodruin"
-      },
+      "next_episode": null,
       "notified_episodes": [
         "S02E08",
         "S03E01",
         "S03E04",
         "S03E05",
         "S03E06",
-        "S03E07"
+        "S03E07",
+        "S03E08"
       ],
       "number_of_seasons": 3,
       "seasons": {
@@ -272,7 +269,7 @@
         "3": "2026-11-11"
       },
       "status": "Returning Series",
-      "vote_average": 7.222
+      "vote_average": 7.221
     },
     "tv:93740": {
       "first_air_date": "2021-09-23",
@@ -409,7 +406,7 @@
         "4": "2026-08-04"
       },
       "status": "Returning Series",
-      "vote_average": 8.367
+      "vote_average": 8.369
     }
   }
 }
